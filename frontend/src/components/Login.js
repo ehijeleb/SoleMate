@@ -59,10 +59,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: `url('/path-to-your-image/background.jpg')` }}>
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md bg-opacity-90">
-        <h2 className="text-3xl text-center text-purple-900 font-bold mb-8">SoleMate</h2>
-
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/images/background.webp')" }}
+    >
+      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-3xl text-center text-purple-900 font-extrabold tracking-wider  mb-8">SoleMate</h2>
+  
         <form onSubmit={isRegister ? handleRegister : handleLogin} className="space-y-4">
           {isRegister && (
             <>
@@ -132,7 +135,7 @@ const Login = () => {
             {isRegister ? "Register" : "Login"}
           </button>
         </form>
-
+  
         <p className="mt-4 text-center text-sm text-zinc-700">
           {isRegister ? "Already have an account? " : "Don't have an account? "}
           <span
@@ -145,6 +148,7 @@ const Login = () => {
       </div>
     </div>
   );
+  
 };
 
 export default Login;
