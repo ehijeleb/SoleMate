@@ -8,12 +8,12 @@ import './tailwind.css';
 function App() {
   return (
     <Router>
-      <div className="App">
+      <Layout>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/inventory" element={<Inventory />} />
         </Routes>
-      </div>
+      </Layout>
     </Router>
   );
 }
