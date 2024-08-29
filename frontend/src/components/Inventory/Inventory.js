@@ -163,6 +163,7 @@ const Inventory = () => {
 
   return (
     <Layout>
+    
       <h2 className="text-3xl text-center text-purple-900 font-bold mb-8">Inventory</h2>
 
       <button
@@ -175,10 +176,10 @@ const Inventory = () => {
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
       {!loading && !error && (
-        <div className="relative overflow-x-auto">
-          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-              <tr>
+        <div className="relative overflow-x-auto rounded-xl bg-zinc-800 border border-zinc-700">
+        <table className="w-full text-sm text-left rtl:text-right text-zinc-400">
+            <thead className="text-xs uppercase bg-zinc-800 text-zinc-400 rounded-t-xl">
+            <tr className="border-b border-zinc-700">
                 <th scope="col" className="px-6 py-3">Product Name</th>
                 <th scope="col" className="px-6 py-3">Brand</th>
                 <th scope="col" className="px-6 py-3">Size</th>
@@ -186,43 +187,49 @@ const Inventory = () => {
                 <th scope="col" className="px-6 py-3">Price</th>
                 <th scope="col" className="px-6 py-3">Image</th>
                 <th scope="col" className="px-6 py-3">Actions</th>
-              </tr>
+            </tr>
             </thead>
             <tbody>
-              {inventory.map(item => (
-                <tr key={item.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                  <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+            {inventory.map((item) => (
+                <tr
+                key={item.id}
+                className="border-b bg-zinc-800 border-zinc-700 last:border-none"
+                >
+                <th
+                    scope="row"
+                    className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                >
                     {item.product_name}
-                  </th>
-                  <td className="px-6 py-4">{item.brand}</td>
-                  <td className="px-6 py-4">{item.size}</td>
-                  <td className="px-6 py-4">{item.quantity}</td>
-                  <td className="px-6 py-4">${item.price}</td>
-                  <td className="px-6 py-4">
+                </th>
+                <td className="px-6 py-4">{item.brand}</td>
+                <td className="px-6 py-4">{item.size}</td>
+                <td className="px-6 py-4">{item.quantity}</td>
+                <td className="px-6 py-4">${item.price}</td>
+                <td className="px-6 py-4">
                     <img
-                      src={item.image_url || placeholderImageUrl}
-                      alt={item.product_name}
-                      className="w-16 h-16 object-cover rounded-md"
+                    src={item.image_url || placeholderImageUrl}
+                    alt={item.product_name}
+                    className="w-16 h-16 object-cover rounded-md"
                     />
-                  </td>
-                  <td className="px-6 py-4">
+                </td>
+                <td className="px-6 py-4">
                     <button
-                      onClick={() => openEditModal(item)}
-                      className="bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2"
+                    onClick={() => openEditModal(item)}
+                    className="bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2"
                     >
-                      Edit
+                    Edit
                     </button>
                     <button
-                      onClick={() => deleteInventoryItem(item.id)}
-                      className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
+                    onClick={() => deleteInventoryItem(item.id)}
+                    className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
                     >
-                      Delete
+                    Delete
                     </button>
-                  </td>
+                </td>
                 </tr>
-              ))}
+            ))}
             </tbody>
-          </table>
+        </table>
         </div>
       )}
 
@@ -232,6 +239,7 @@ const Inventory = () => {
         onAddItem={addOrUpdateInventoryItem}
         item={selectedItem}
       />
+      
     </Layout>
   );
 };

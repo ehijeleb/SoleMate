@@ -1,16 +1,18 @@
 import React from 'react';
-import Sidebar from './Sidebar';  // Adjust the import path according to your project structure
+import Sidebar from './Sidebar'; // Adjust the import path according to your project structure
+import Navbar from './Navbar';   // Import the Navbar component
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex h-screen">
-      {/* Sidebar with an increased width */}
-      <div className='w-32' >  {/* Adjust the width as needed */}
-        <Sidebar />
-      </div>
-      {/* Main content area */}
-      <div className="flex-1 p-6 overflow-auto">
-        {children}
+    <div className="min-h-screen bg-zinc-900">
+      <Navbar /> 
+      <div className="flex">        
+          <Sidebar />       
+        <div className="flex-1  p-6">
+          <div className="max-w-7xl ml-96 mt-10">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
