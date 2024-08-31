@@ -163,7 +163,7 @@ const Inventory = () => {
 
   return (
     <Layout>
-    
+      <div className="relative">
       <h2 className="text-3xl text-center text-purple-900 font-bold mb-8">Inventory</h2>
 
       <button
@@ -232,14 +232,16 @@ const Inventory = () => {
         </table>
         </div>
       )}
-
+      </div>
+      <div className="relative">
       <AddItemModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddItem={addOrUpdateInventoryItem}
         item={selectedItem}
       />
-      
+    </div>
+    
     </Layout>
   );
 };

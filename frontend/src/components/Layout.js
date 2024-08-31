@@ -1,17 +1,15 @@
 import React from 'react';
-import Sidebar from './Sidebar'; // Adjust the import path according to your project structure
-import Navbar from './Navbar';   // Import the Navbar component
+import Navbar from './Navbar';
+import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-zinc-900">
-      <Navbar /> 
-      <div className="flex">        
-          <Sidebar />       
-        <div className="flex-1  p-6">
-          <div className="max-w-7xl ml-96 mt-10">
-            {children}
-          </div>
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 min-h-screen bg-zinc-900">
+        <Navbar />
+        <div className="mt-16 ml-64 p-4"> {/* mt-16 ensures there's space for the navbar */}
+          {children}
         </div>
       </div>
     </div>
