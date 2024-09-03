@@ -2,11 +2,11 @@ import React from 'react';
 
 const Navbar = () => {
   return (
-    <nav className="w-full bg-zinc-900 border-b border-zinc-500 fixed top-0 z-50">
+    <nav className="w-full bg-zinc-900 border-b border-zinc-500 fixed top-0 z-40">
       <div className="px-4 py-3 flex justify-end">
-        <span className="text-3xl font-extrabold text-purple-900 tracking-wider">
+        <h2 className="text-4xl font-extrabold text-violet-300 tracking-wider">
           SoleMate
-        </span>
+        </h2>
       </div>
     </nav>
   );

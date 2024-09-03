@@ -13,7 +13,7 @@ const Inventory = () => {
   const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
-    fetchInventory(); // Fetch existing inventory items when the component loads
+    fetchInventory();
   }, []);
 
   const fetchInventory = async () => {
@@ -55,6 +55,8 @@ const Inventory = () => {
         return;
     }
 
+    let shoeLogError = null;
+
     if (item.id) {
         const { error } = await supabase
             .from('inventory')
@@ -72,10 +74,25 @@ const Inventory = () => {
         if (error) {
             console.error("Error updating inventory item:", error);
         } else {
+            await supabase
+              .from('shoe_log')
+              .update({
+                  product_name: item.product_name,
+                  brand: item.brand,
+                  size: item.size,
+                  quantity: item.quantity,
+                  price: item.price,
+                  image_url: imageUrl,
+              })
+              .eq('id', item.id) // Assuming the shoe_log table uses the same id as inventory
+              .eq('user_id', user.id)
+              .then(({ error }) => {
+                shoeLogError = error;
+              });
             fetchInventory();
         }
     } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('inventory')
             .insert([{
                 user_id: user.id,
@@ -85,13 +102,38 @@ const Inventory = () => {
                 quantity: item.quantity,
                 price: item.price,
                 image_url: imageUrl,
-            }]);
+            }])
+            .select();  // Return the inserted row(s) to get the new id
 
         if (error) {
             console.error("Error adding inventory item:", error);
         } else {
+            const newItem = data[0]; // Assuming a single item is inserted
+
+            await supabase
+              .from('shoe_log')
+              .insert([{
+                  id: newItem.id,  // Use the same ID in shoe_log
+                  user_id: user.id,
+                  product_name: newItem.product_name,
+                  brand: newItem.brand,
+                  size: newItem.size,
+                  quantity: newItem.quantity,
+                  price: newItem.price,
+                  image_url: imageUrl,
+                  is_sold: false,
+                  date_added: new Date(),
+              }])
+              .then(({ error }) => {
+                shoeLogError = error;
+              });
+
             fetchInventory();
         }
+    }
+
+    if (shoeLogError) {
+      console.error("Error updating shoe log:", shoeLogError);
     }
 
     setIsModalOpen(false);
@@ -147,11 +189,18 @@ const Inventory = () => {
     if (error) {
       console.error("Error deleting inventory item:", error.message);
     } else {
+      await supabase
+        .from('shoe_log')
+        .update({
+          is_sold: true,
+          date_removed: new Date(),
+        })
+        .eq('id', itemId)
+        .eq('user_id', user.id);
+
       fetchInventory();
     }
 };
-
-  
 
   const openEditModal = (item) => {
     setSelectedItem(item);
@@ -165,21 +214,20 @@ const Inventory = () => {
   return (
     <Layout>
       <div className="relative">
-        <h2 className="text-3xl text-center text-purple-900 font-bold mb-8">Inventory</h2>
+        <h2 className="text-3xl  text-violet-300 font-bold mb-8">Inventory</h2>
 
         <div className="flex justify-between items-center mb-4">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors"
+            className="bg-violet-500 text-white py-2 px-4 rounded-3xl hover:bg-violet-600 transition-colors"
           >
             Add New Item
           </button>
-          <div className="text-white">
+          <div className="text-violet-200">
             <p>Total Stock Value: <span className="font-bold">£{calculateTotalStockValue()}</span></p>
           </div>
         </div>
 
-        {loading && <p>Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
         {!loading && !error && (
           <div className="relative overflow-x-auto rounded-xl bg-zinc-800 border border-zinc-700">
