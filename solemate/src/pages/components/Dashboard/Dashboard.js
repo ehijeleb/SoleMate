@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../Layout';
 import { supabase } from '../../../lib/supabaseClient';
-
+import DashboardProfitChart from "./DashboardProfitChart";
 
 const Dashboard = () => {
     const [userName, setUserName] = useState('');
@@ -30,17 +30,19 @@ const Dashboard = () => {
             const { data: { user } } = await supabase.auth.getUser();
             const { data: salesData, error: salesError } = await supabase
                 .from('sales')
-                .select('*')
+                .select('*')  // Ensure this includes the 'sale_date' and 'profit' fields
                 .eq('user_id', user.id);
         
             if (salesError) {
                 console.error("Error fetching sales:", salesError.message);
             } else {
-                console.log('Fetched sales data:', salesData);  // Debugging log
+                console.log('Fetched sales data:', salesData);  // Log the full sales data
                 setSales(salesData);
-                calculateTotalRevenueAndSales(salesData);
+                calculateTotalRevenueAndSales(salesData);  // Calculate total revenue and sales count
             }
         };
+        
+          
 
         const fetchInventory = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -67,8 +69,18 @@ const Dashboard = () => {
     }, [sales, inventory, totalSpentTimePeriod]);
 
     useEffect(() => {
-        calculateTotalProfit(sales);
+        calculateTotalProfit(sales);  // Call calculateTotalProfit after definition
     }, [sales, profitTimePeriod]);
+
+    // Define calculateTotalProfit before using it
+    const calculateTotalProfit = (sales) => {
+        const filteredSales = filterSalesByTimePeriod(sales, profitTimePeriod);
+        console.log("Filtered sales for profit:", filteredSales);  // Debugging log
+        const totalProfit = filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
+        setTotalProfit(totalProfit.toFixed(2));
+    };
+    
+      
 
     const calculateTotalRevenueAndSales = (sales) => {
         const totalRevenue = sales.reduce((sum, sale) => sum + sale.price_sold, 0);
@@ -78,48 +90,48 @@ const Dashboard = () => {
 
     const calculateTotalSpent = async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-    
-            if (!user) {
-                console.error('User not logged in');
-                return;
+          const { data: { user } } = await supabase.auth.getUser();
+      
+          if (!user) {
+            console.error('User not logged in');
+            return;
+          }
+      
+          // Fetch all shoes from the shoe_log table
+          const { data: shoeLog, error } = await supabase
+            .from('shoe_log')
+            .select('*')
+            .eq('user_id', user.id);
+      
+          if (error) {
+            console.error('Error fetching shoe log:', error.message);
+            return;
+          }
+      
+          console.log("Original shoe log data:", shoeLog);  // Debugging log to see the raw data
+      
+          // Apply filtering to the shoe log based on the selected time period
+          const filteredSales = filterSalesByTimePeriod(shoeLog, totalSpentTimePeriod);
+          console.log("Filtered shoe log data:", filteredSales);  // Debugging log to see filtered data
+          
+          const totalSpent = filteredSales.reduce((sum, sale) => {
+            if (sale.price) {
+              return sum + (sale.quantity * sale.price);
             }
-    
-            // Fetch all shoes from the shoe_log table
-            const { data: shoeLog, error } = await supabase
-                .from('shoe_log')
-                .select('*')
-                .eq('user_id', user.id);
-    
-            if (error) {
-                console.error('Error fetching shoe log:', error.message);
-                return;
-            }
-    
-            const filteredSales = filterSalesByTimePeriod(shoeLog, totalSpentTimePeriod);
-            const totalSpent = filteredSales.reduce((sum, sale) => {
-                if (sale.price) {
-                    return sum + (sale.quantity * sale.price);
-                }
-                return sum;
-            }, 0);
-    
-            const totalItems = filteredSales.reduce((sum, sale) => sum + sale.quantity, 0);
-    
-            setTotalSpent(totalSpent.toFixed(2));
-            setTotalItems(totalItems);
+            return sum;
+          }, 0);
+      
+          const totalItems = filteredSales.reduce((sum, sale) => sum + sale.quantity, 0);
+      
+          setTotalSpent(totalSpent.toFixed(2));
+          setTotalItems(totalItems);
         } catch (error) {
-            console.error('Error calculating total spent:', error);
+          console.error('Error calculating total spent:', error);
         }
-    };
+      };
+      
 
-    const calculateTotalProfit = (sales) => {
-        const filteredSales = filterSalesByTimePeriod(sales, profitTimePeriod);
-        const totalProfit = filteredSales.reduce((sum, sale) => sum + sale.profit, 0);
-        setTotalProfit(totalProfit.toFixed(2));
-    };
-
-    const filterSalesByTimePeriod = (data, timePeriod) => {
+      const filterSalesByTimePeriod = (data, timePeriod) => {
         const now = new Date();
         let filteredData = data;
     
@@ -127,30 +139,38 @@ const Dashboard = () => {
             case 'Last Week':
                 const lastWeek = new Date();
                 lastWeek.setDate(now.getDate() - 7);
-                filteredData = data.filter(item => new Date(item.date_added) >= lastWeek);
+                filteredData = data.filter(item => new Date(item.sale_date) >= lastWeek);
                 break;
             case 'Last Month':
                 const lastMonth = new Date();
                 lastMonth.setMonth(now.getMonth() - 1);
-                filteredData = data.filter(item => new Date(item.date_added) >= lastMonth);
+                filteredData = data.filter(item => new Date(item.sale_date) >= lastMonth);
                 break;
             case 'Last 6 Months':
                 const lastSixMonths = new Date();
                 lastSixMonths.setMonth(now.getMonth() - 6);
-                filteredData = data.filter(item => new Date(item.date_added) >= lastSixMonths);
+                filteredData = data.filter(item => new Date(item.sale_date) >= lastSixMonths);
                 break;
             case 'Last Year':
                 const lastYear = new Date();
                 lastYear.setFullYear(now.getFullYear() - 1);
-                filteredData = data.filter(item => new Date(item.date_added) >= lastYear);
+                filteredData = data.filter(item => new Date(item.sale_date) >= lastYear);
                 break;
             default:
                 // 'All Time' case, no filtering needed
+                filteredData = data;
                 break;
         }
     
+        console.log("Filtered data based on time period:", filteredData);  // Debugging log
         return filteredData;
     };
+    
+      
+      
+      
+      
+      
 
     const handleTotalSpentTimePeriodChange = (e) => {
         setTotalSpentTimePeriod(e.target.value);
@@ -163,7 +183,7 @@ const Dashboard = () => {
     return (
         <Layout>
             <div className="w-full h-full p-0 m-0 ">
-                <div className="mb-32">
+                <div className="mb-14">
                     <h1 className="text-4xl font-extrabold text-violet-300">Welcome, {userName}!</h1>
                 </div>
 
@@ -210,12 +230,12 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] h-96 mx-8 gap-6">
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))]  mx-8 gap-6">
                     <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
                         {/* Content for Retail value */}
                     </div>
                     <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
-                        {/* Content for Transactions chart */}
+                    <DashboardProfitChart />
                     </div>
                 </div>
             </div>
