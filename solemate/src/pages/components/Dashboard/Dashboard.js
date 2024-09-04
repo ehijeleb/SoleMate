@@ -29,21 +29,21 @@ const Dashboard = () => {
         const fetchSales = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             const { data: salesData, error: salesError } = await supabase
-                .from('sales')
-                .select('*')  // Ensure this includes the 'sale_date' and 'profit' fields
-                .eq('user_id', user.id);
-        
+              .from('sales')
+              .select('*')  // Ensure this includes 'sale_date' and 'profit'
+              .eq('user_id', user.id);
+          
             if (salesError) {
-                console.error("Error fetching sales:", salesError.message);
+              console.error("Error fetching sales:", salesError.message);
             } else {
-                console.log('Fetched sales data:', salesData);  // Log the full sales data
-                setSales(salesData);
-                calculateTotalRevenueAndSales(salesData);  // Calculate total revenue and sales count
+              console.log('Fetched sales data:', salesData);  // Log the full sales data
+              setSales(salesData);
+              calculateTotalRevenueAndSales(salesData);  // Calculate total revenue and sales count
             }
-        };
+          };
         
           
-
+        
         const fetchInventory = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             const { data: inventoryData, error: inventoryError } = await supabase
@@ -76,9 +76,11 @@ const Dashboard = () => {
     const calculateTotalProfit = (sales) => {
         const filteredSales = filterSalesByTimePeriod(sales, profitTimePeriod);
         console.log("Filtered sales for profit:", filteredSales);  // Debugging log
+      
         const totalProfit = filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
         setTotalProfit(totalProfit.toFixed(2));
-    };
+      };
+      
     
       
 
@@ -91,7 +93,7 @@ const Dashboard = () => {
     const calculateTotalSpent = async () => {
         try {
           const { data: { user } } = await supabase.auth.getUser();
-      
+          
           if (!user) {
             console.error('User not logged in');
             return;
@@ -102,26 +104,26 @@ const Dashboard = () => {
             .from('shoe_log')
             .select('*')
             .eq('user_id', user.id);
-      
+          
           if (error) {
             console.error('Error fetching shoe log:', error.message);
             return;
           }
       
-          console.log("Original shoe log data:", shoeLog);  // Debugging log to see the raw data
+          console.log("Fetched shoe log data:", shoeLog);  // Log the fetched shoe log
       
-          // Apply filtering to the shoe log based on the selected time period
-          const filteredSales = filterSalesByTimePeriod(shoeLog, totalSpentTimePeriod);
-          console.log("Filtered shoe log data:", filteredSales);  // Debugging log to see filtered data
-          
-          const totalSpent = filteredSales.reduce((sum, sale) => {
-            if (sale.price) {
-              return sum + (sale.quantity * sale.price);
+          // Filter sales by the selected time period
+          const filteredShoeLog = filterSalesByTimePeriod(shoeLog, totalSpentTimePeriod);
+          console.log("Filtered shoe log for total spent:", filteredShoeLog);  // Debugging log
+      
+          const totalSpent = filteredShoeLog.reduce((sum, shoe) => {
+            if (shoe.price) {
+              return sum + (shoe.quantity * shoe.price);
             }
             return sum;
           }, 0);
       
-          const totalItems = filteredSales.reduce((sum, sale) => sum + sale.quantity, 0);
+          const totalItems = filteredShoeLog.reduce((sum, shoe) => sum + shoe.quantity, 0);
       
           setTotalSpent(totalSpent.toFixed(2));
           setTotalItems(totalItems);
@@ -130,41 +132,43 @@ const Dashboard = () => {
         }
       };
       
+      
 
       const filterSalesByTimePeriod = (data, timePeriod) => {
         const now = new Date();
         let filteredData = data;
-    
+      
         switch (timePeriod) {
-            case 'Last Week':
-                const lastWeek = new Date();
-                lastWeek.setDate(now.getDate() - 7);
-                filteredData = data.filter(item => new Date(item.sale_date) >= lastWeek);
-                break;
-            case 'Last Month':
-                const lastMonth = new Date();
-                lastMonth.setMonth(now.getMonth() - 1);
-                filteredData = data.filter(item => new Date(item.sale_date) >= lastMonth);
-                break;
-            case 'Last 6 Months':
-                const lastSixMonths = new Date();
-                lastSixMonths.setMonth(now.getMonth() - 6);
-                filteredData = data.filter(item => new Date(item.sale_date) >= lastSixMonths);
-                break;
-            case 'Last Year':
-                const lastYear = new Date();
-                lastYear.setFullYear(now.getFullYear() - 1);
-                filteredData = data.filter(item => new Date(item.sale_date) >= lastYear);
-                break;
-            default:
-                // 'All Time' case, no filtering needed
-                filteredData = data;
-                break;
+          case 'Last Week':
+            const lastWeek = new Date();
+            lastWeek.setDate(now.getDate() - 7);
+            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastWeek);
+            break;
+          case 'Last Month':
+            const lastMonth = new Date();
+            lastMonth.setMonth(now.getMonth() - 1);
+            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastMonth);
+            break;
+          case 'Last 6 Months':
+            const lastSixMonths = new Date();
+            lastSixMonths.setMonth(now.getMonth() - 6);
+            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastSixMonths);
+            break;
+          case 'Last Year':
+            const lastYear = new Date();
+            lastYear.setFullYear(now.getFullYear() - 1);
+            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastYear);
+            break;
+          default:
+            // 'All Time' case, no filtering needed
+            filteredData = data;
+            break;
         }
-    
+      
         console.log("Filtered data based on time period:", filteredData);  // Debugging log
         return filteredData;
-    };
+      };
+      
     
       
       
