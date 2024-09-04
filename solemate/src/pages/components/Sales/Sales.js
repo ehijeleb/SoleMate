@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
+
 import Layout from '../Layout';
 import AddSaleModal from './AddSaleModal';
 

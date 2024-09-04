@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+import { useRouter } from 'next/router'; // Import Next.js router
 
 const Login = () => {
   const [firstName, setFirstName] = useState('');
@@ -11,7 +11,7 @@ const Login = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
-  const navigate = useNavigate(); // Add useNavigate for navigation
+  const router = useRouter(); // Use Next.js router for navigation
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -38,7 +38,7 @@ const Login = () => {
       setError(signUpError.message);
     } else {
       setMessage("Registration successful and logged in!");
-      navigate('/inventory'); // Navigate to Inventory after registration
+      router.push('/inventory'); // Navigate to Inventory after registration
     }
   };
 
@@ -56,7 +56,7 @@ const Login = () => {
       setError(error.message);
     } else {
       setMessage("Login successful!");
-      navigate('/inventory'); // Navigate to Inventory after login
+      router.push('/inventory'); // Navigate to Inventory after login
     }
   };
 

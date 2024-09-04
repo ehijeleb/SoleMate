@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../Layout';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../../lib/supabaseClient';
+
 
 const Dashboard = () => {
     const [userName, setUserName] = useState('');
@@ -9,9 +10,10 @@ const Dashboard = () => {
     const [totalRevenue, setTotalRevenue] = useState(0);
     const [totalSalesCount, setTotalSalesCount] = useState(0);
     const [totalSpent, setTotalSpent] = useState(0);
-    const [timePeriod, setTimePeriod] = useState('All Time');
+    const [totalSpentTimePeriod, setTotalSpentTimePeriod] = useState('All Time'); // Independent state for Total Spent
     const [totalItems, setTotalItems] = useState(0);
     const [totalProfit, setTotalProfit] = useState(0);
+    const [profitTimePeriod, setProfitTimePeriod] = useState('All Time'); // Independent state for Profit
 
     useEffect(() => {
         const fetchUserName = async () => {
@@ -58,12 +60,15 @@ const Dashboard = () => {
         fetchUserName();
         fetchSales();
         fetchInventory();
-    }, [timePeriod]);
+    }, []);
 
     useEffect(() => {
         calculateTotalSpent();
+    }, [sales, inventory, totalSpentTimePeriod]);
+
+    useEffect(() => {
         calculateTotalProfit(sales);
-    }, [sales, inventory, timePeriod]);
+    }, [sales, profitTimePeriod]);
 
     const calculateTotalRevenueAndSales = (sales) => {
         const totalRevenue = sales.reduce((sum, sale) => sum + sale.price_sold, 0);
@@ -91,7 +96,7 @@ const Dashboard = () => {
                 return;
             }
     
-            const filteredSales = filterSalesByTimePeriod(shoeLog);
+            const filteredSales = filterSalesByTimePeriod(shoeLog, totalSpentTimePeriod);
             const totalSpent = filteredSales.reduce((sum, sale) => {
                 if (sale.price) {
                     return sum + (sale.quantity * sale.price);
@@ -103,52 +108,56 @@ const Dashboard = () => {
     
             setTotalSpent(totalSpent.toFixed(2));
             setTotalItems(totalItems);
-
         } catch (error) {
             console.error('Error calculating total spent:', error);
         }
     };
 
     const calculateTotalProfit = (sales) => {
-        const totalProfit = sales.reduce((sum, sale) => sum + sale.profit, 0);
+        const filteredSales = filterSalesByTimePeriod(sales, profitTimePeriod);
+        const totalProfit = filteredSales.reduce((sum, sale) => sum + sale.profit, 0);
         setTotalProfit(totalProfit.toFixed(2));
     };
 
-    const filterSalesByTimePeriod = (shoeLog) => {
+    const filterSalesByTimePeriod = (data, timePeriod) => {
         const now = new Date();
-        let filteredLog = shoeLog;
+        let filteredData = data;
     
         switch (timePeriod) {
             case 'Last Week':
                 const lastWeek = new Date();
                 lastWeek.setDate(now.getDate() - 7);
-                filteredLog = shoeLog.filter(log => new Date(log.date_added) >= lastWeek);
+                filteredData = data.filter(item => new Date(item.date_added) >= lastWeek);
                 break;
             case 'Last Month':
                 const lastMonth = new Date();
                 lastMonth.setMonth(now.getMonth() - 1);
-                filteredLog = shoeLog.filter(log => new Date(log.date_added) >= lastMonth);
+                filteredData = data.filter(item => new Date(item.date_added) >= lastMonth);
                 break;
             case 'Last 6 Months':
                 const lastSixMonths = new Date();
                 lastSixMonths.setMonth(now.getMonth() - 6);
-                filteredLog = shoeLog.filter(log => new Date(log.date_added) >= lastSixMonths);
+                filteredData = data.filter(item => new Date(item.date_added) >= lastSixMonths);
                 break;
             case 'Last Year':
                 const lastYear = new Date();
                 lastYear.setFullYear(now.getFullYear() - 1);
-                filteredLog = shoeLog.filter(log => new Date(log.date_added) >= lastYear);
+                filteredData = data.filter(item => new Date(item.date_added) >= lastYear);
                 break;
             default:
                 // 'All Time' case, no filtering needed
                 break;
         }
     
-        return filteredLog;
+        return filteredData;
     };
 
-    const handleTimePeriodChange = (e) => {
-        setTimePeriod(e.target.value);
+    const handleTotalSpentTimePeriodChange = (e) => {
+        setTotalSpentTimePeriod(e.target.value);
+    };
+
+    const handleProfitTimePeriodChange = (e) => {
+        setProfitTimePeriod(e.target.value);
     };
 
     return (
@@ -168,8 +177,8 @@ const Dashboard = () => {
                         <div className="flex justify-between">
                             <h2 className="text-xl font-bold text-white">Total Spent</h2>
                             <select
-                                value={timePeriod}
-                                onChange={handleTimePeriodChange}
+                                value={totalSpentTimePeriod}
+                                onChange={handleTotalSpentTimePeriodChange}
                                 className="text-sm bg-zinc-700 text-white rounded-lg px-2 py-1 border border-zinc-600 focus:outline-none"
                             >
                                 <option>Last Week</option>
@@ -186,8 +195,8 @@ const Dashboard = () => {
                         <div className="flex justify-between">
                             <h2 className="text-xl font-bold text-white">Profit</h2>
                             <select
-                                value={timePeriod}
-                                onChange={handleTimePeriodChange}
+                                value={profitTimePeriod}
+                                onChange={handleProfitTimePeriodChange}
                                 className="text-sm bg-zinc-700 text-white rounded-lg px-2 py-1 border border-zinc-600 focus:outline-none"
                             >
                                 <option>Last Week</option>
@@ -198,7 +207,6 @@ const Dashboard = () => {
                             </select>
                         </div>
                         <p className="text-2xl text-violet-300 mt-2">£{totalProfit}</p>
-                        <p className="text-sm text-gray-400 mt-2">{totalItems} Transactions</p>
                     </div>
                 </div>
 

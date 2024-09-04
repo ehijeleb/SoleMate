@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { supabase } from '../supabaseClient'; // Adjust the import path as needed
-import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient'; // Adjust the import path as needed
+import { useRouter } from 'next/router'; // Use Next.js router
 
 const LogOut = () => {
-    const navigate = useNavigate();
+    const router = useRouter(); // Initialize the Next.js router
 
     useEffect(() => {
         const logOutUser = async () => {
@@ -11,12 +11,12 @@ const LogOut = () => {
             if (error) {
                 console.error('Error logging out:', error.message);
             } else {
-                navigate('/'); // Redirect to the login page after logout
+                router.push('/'); // Redirect to the login page after logout
             }
         };
 
         logOutUser();
-    }, [navigate]);
+    }, [router]);
 
     return null; // This component doesn't need to render anything
 };
