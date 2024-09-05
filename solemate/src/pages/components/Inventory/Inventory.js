@@ -282,7 +282,7 @@ const Inventory = () => {
           </div>
         )}
       </div>
-      <div className="relative mt-32">
+      <div className="relative">
         <AddItemModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

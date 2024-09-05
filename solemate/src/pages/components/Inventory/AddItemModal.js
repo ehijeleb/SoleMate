@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
   const [newItem, setNewItem] = useState({
     product_name: '',
+    item_type: '',
     brand: '',
     size: '',
     quantity: '',
@@ -10,16 +11,20 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
     image_file: null,
   });
 
+  // Predefined options for the brands
+  const brandOptions = {
+    shoes: ['Nike', 'Adidas', 'New Balance', 'Air Jordan', 'Yeezy', 'ASICS', 'Other'],
+    clothing: ['Nike', 'Fear of God', 'Kith', 'Supreme', 'Sp5der', 'Other'],
+    collectibles: ['Funko', 'Lego', 'Hasbro', 'Mattel', 'Sideshow Collectibles', 'Topps', 'Other']
+  };
+
   useEffect(() => {
     if (isOpen) {
-      // Disable scrolling when the modal is open
       document.body.style.overflow = 'hidden';
     } else {
-      // Re-enable scrolling when the modal is closed
       document.body.style.overflow = '';
     }
 
-    // Cleanup when the component is unmounted or when isOpen changes
     return () => {
       document.body.style.overflow = '';
     };
@@ -30,6 +35,7 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
       setNewItem({
         id: item.id,
         product_name: item.product_name || '',
+        item_type: item.item_type || '',
         brand: item.brand || '',
         size: item.size || '',
         quantity: item.quantity || '',
@@ -40,7 +46,20 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
   }, [item]);
 
   const handleSubmit = () => {
-    onAddItem(newItem);
+    // Ensure numeric fields have a value or are set to null
+    const validatedItem = {
+      ...newItem,
+      size: newItem.size ? parseFloat(newItem.size) : null,
+      quantity: newItem.quantity ? parseInt(newItem.quantity, 10) : null,
+      price: newItem.price ? parseFloat(newItem.price) : null,
+    };
+  
+    onAddItem(validatedItem);
+  };
+  
+
+  const handleTypeChange = (e) => {
+    setNewItem({ ...newItem, item_type: e.target.value, brand: '' });
   };
 
   return isOpen ? (
@@ -58,23 +77,46 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-zinc-300">Brand</label>
-            <input
-              type="text"
-              value={newItem.brand}
-              onChange={(e) => setNewItem({ ...newItem, brand: e.target.value })}
+            <label className="text-xs font-medium text-zinc-300">Item Type</label>
+            <select
+              value={newItem.item_type}
+              onChange={handleTypeChange}
               className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-            />
+            >
+              <option value="">Select Item Type</option>
+              <option value="shoes">Shoes</option>
+              <option value="clothing">Clothing</option>
+              <option value="collectibles">Collectibles</option>
+            </select>
           </div>
-          <div>
-            <label className="text-xs font-medium text-zinc-300">Size</label>
-            <input
-              type="number"
-              value={newItem.size}
-              onChange={(e) => setNewItem({ ...newItem, size: e.target.value })}
-              className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-            />
-          </div>
+          {newItem.item_type && (
+            <div>
+              <label className="text-xs font-medium text-zinc-300">Brand</label>
+              <select
+                value={newItem.brand}
+                onChange={(e) => setNewItem({ ...newItem, brand: e.target.value })}
+                className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
+              >
+                <option value="">Select Brand</option>
+                {brandOptions[newItem.item_type].map((brand, index) => (
+                  <option key={index} value={brand}>
+                    {brand}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {newItem.item_type === 'shoes' && (
+            <div>
+              <label className="text-xs font-medium text-zinc-300">Size</label>
+              <input
+                type="number"
+                value={newItem.size}
+                onChange={(e) => setNewItem({ ...newItem, size: e.target.value })}
+                className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
+              />
+            </div>
+          )}
           <div>
             <label className="text-xs font-medium text-zinc-300">Quantity</label>
             <input
