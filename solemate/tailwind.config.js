@@ -1,10 +1,12 @@
+const {nextui} = require('@nextui-org/theme');
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ['class'],
-    content: [
-    './src/pages/**/*.{js,ts,jsx,tsx}', // For your Next.js pages
-    './src/components/**/*.{js,ts,jsx,tsx}', // If you have components here
-    './src/lib/**/*.{js,ts,jsx,tsx}', // For other reusable components, if any
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx}",
+    "./src/components/**/*.{js,ts,jsx,tsx}",
+    "./src/lib/**/*.{js,ts,jsx,tsx}",
+    './node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
   	extend: {
@@ -57,5 +59,8 @@ module.exports = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require('tailwindcss-animate'), // This was previously misformatted
+    nextui(),
+  ],
 };

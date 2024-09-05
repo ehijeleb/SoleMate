@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabaseClient';
 import { useState, useEffect } from "react";
 import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"; // Using Recharts' built-in Tooltip
+import {Spinner} from "@nextui-org/spinner";
 
 import {
   Card,
@@ -51,7 +52,7 @@ export default function DashboardProfitChart() {
 
   // Return null or a fallback UI if no data is available
   if (profitData.length === 0) {
-    return <div>Loading...</div>;
+    return <div><Spinner size="sm" /></div>;
   }
 
   return (
