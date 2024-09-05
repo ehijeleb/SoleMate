@@ -229,59 +229,59 @@ const Inventory = () => {
           </div>
         </div>
 
-        {error && <p className="text-red-500">{error}</p>}
-        {!loading && !error && (
-          <div className="relative overflow-x-auto rounded-xl bg-zinc-800 border border-zinc-700">
-            <table className="w-full text-sm text-left rtl:text-right text-zinc-400">
-              <thead className="text-xs uppercase bg-zinc-800 text-zinc-400 rounded-t-xl">
-                <tr className="border-b border-zinc-700">
-                  <th scope="col" className="px-6 py-3">Product Name</th>
-                  <th scope="col" className="px-6 py-3">Brand</th>
-                  <th scope="col" className="px-6 py-3">Size</th>
-                  <th scope="col" className="px-6 py-3">Quantity</th>
-                  <th scope="col" className="px-6 py-3">Price</th>
-                  <th scope="col" className="px-6 py-3">Image</th>
-                  <th scope="col" className="px-6 py-3">Actions</th>
+        {/* Display inventory */}
+        <div className="relative overflow-x-auto rounded-xl bg-zinc-800 border border-zinc-700">
+          <table className="w-full text-sm text-left rtl:text-right text-zinc-400">
+            <thead className="text-xs uppercase bg-zinc-800 text-zinc-400 rounded-t-xl">
+              <tr className="border-b border-zinc-700">
+                <th scope="col" className="px-6 py-3">Product Name</th>
+                <th scope="col" className="px-6 py-3">Brand</th>
+                <th scope="col" className="px-6 py-3">Size</th>
+                <th scope="col" className="px-6 py-3">Quantity</th>
+                <th scope="col" className="px-6 py-3">Price</th>
+                <th scope="col" className="px-6 py-3">Image</th>
+                <th scope="col" className="px-6 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {inventory.map((item) => (
+                <tr key={item.id} className="border-b bg-zinc-800 border-zinc-700 last:border-none">
+                  <th scope="row" className="px-6 py-4 font-medium text-zinc-400 whitespace-nowrap dark:text-white">
+                    {item.product_name}
+                  </th>
+                  <td className="px-6 py-4">{item.brand}</td>
+                  <td className="px-6 py-4">{item.size}</td>
+                  <td className="px-6 py-4">{item.quantity}</td>
+                  <td className="px-6 py-4">£{item.price}</td>
+                  <td className="px-6 py-4">
+                    <img
+                      src={item.image_url || placeholderImageUrl}
+                      alt={item.product_name}
+                      className="w-16 h-16 object-cover rounded-md"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => openEditModal(item)}
+                      className="bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteInventoryItem(item.id)}
+                      className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {inventory.map((item) => (
-                  <tr key={item.id} className="border-b bg-zinc-800 border-zinc-700 last:border-none">
-                    <th scope="row" className="px-6 py-4 font-medium text-zinc-400 whitespace-nowrap dark:text-white">
-                      {item.product_name}
-                    </th>
-                    <td className="px-6 py-4">{item.brand}</td>
-                    <td className="px-6 py-4">{item.size}</td>
-                    <td className="px-6 py-4">{item.quantity}</td>
-                    <td className="px-6 py-4">£{item.price}</td>
-                    <td className="px-6 py-4">
-                      <img
-                        src={item.image_url || placeholderImageUrl}
-                        alt={item.product_name}
-                        className="w-16 h-16 object-cover rounded-md"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => openEditModal(item)}
-                        className="bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteInventoryItem(item.id)}
-                        className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+      
+      {/* Modal for adding/editing items */}
       <div className="relative">
         <AddItemModal
           isOpen={isModalOpen}
