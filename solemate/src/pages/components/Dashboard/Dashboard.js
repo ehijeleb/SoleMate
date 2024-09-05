@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../Layout';
 import { supabase } from '../../../lib/supabaseClient';
 import DashboardProfitChart from "./DashboardProfitChart";
+import DashboardBrandBreakdown from './DashboardBrandBreakdown';
 
 const Dashboard = () => {
     const [userName, setUserName] = useState('');
@@ -236,7 +237,7 @@ const Dashboard = () => {
 
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))]  mx-8 gap-6">
                     <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
-                        {/* Content for Retail value */}
+                    <DashboardBrandBreakdown />
                     </div>
                     <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
                     <DashboardProfitChart />
