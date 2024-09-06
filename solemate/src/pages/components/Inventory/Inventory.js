@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button as NextUIButton } from "@nextui-org/react";
 import { supabase } from '../../../lib/supabaseClient';
-
 import Layout from '../Layout';
 import AddItemModal from './AddItemModal';
-
-const placeholderImageUrl = 'https://xlotiuomuxsgqzdnaqtu.supabase.co/storage/v1/object/public/shoe-images/shoe-images/istockphoto-1324844476-612x612.jpg';
 
 const Inventory = () => {
   const [inventory, setInventory] = useState([]);
@@ -212,84 +210,92 @@ const Inventory = () => {
     return inventory.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+  const classNames = {
+    base: "w-full relative ",  
+    wrapper: "p-4 bg-zinc-800 ",  
+    table: "min-w-full auto", 
+    th: "px-6 py-3 bg-zinc-700 text-zinc-400 text-left",
+    td: "px-6 py-4 text-zinc-400",
+    row: "bg-zinc-800   last:border-none",
+    img: "w-16 h-16 object-cover rounded-md",
+    buttonEdit: "bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2",
+    buttonDelete: "bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors",
+  };
+
   return (
     <Layout>
       <div className="relative">
-        <h2 className="text-3xl  text-violet-300 font-bold mb-8">Inventory</h2>
+        <h2 className="text-3xl text-violet-300 font-bold mb-8">Inventory</h2>
 
         <div className="flex justify-between items-center mb-4">
-          <button
-            onClick={() => setIsModalOpen(true)}
+          <NextUIButton
+            onPress={() => setIsModalOpen(true)}
             className="bg-violet-500 text-white py-2 px-4 rounded-3xl hover:bg-violet-600 transition-colors"
           >
             Add New Item
-          </button>
+          </NextUIButton>
           <div className="text-violet-200">
             <p>Total Stock Value: <span className="font-bold">£{calculateTotalStockValue()}</span></p>
           </div>
         </div>
 
-        {/* Display inventory */}
-        <div className="relative overflow-x-auto rounded-xl bg-zinc-800 border border-zinc-700">
-          <table className="w-full text-sm text-left rtl:text-right text-zinc-400">
-            <thead className="text-xs uppercase bg-zinc-800 text-zinc-400 rounded-t-xl">
-              <tr className="border-b border-zinc-700">
-                <th scope="col" className="px-6 py-3">Product Name</th>
-                <th scope="col" className="px-6 py-3">Brand</th>
-                <th scope="col" className="px-6 py-3">Size</th>
-                <th scope="col" className="px-6 py-3">Quantity</th>
-                <th scope="col" className="px-6 py-3">Price</th>
-                <th scope="col" className="px-6 py-3">Image</th>
-                <th scope="col" className="px-6 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inventory.map((item) => (
-                <tr key={item.id} className="border-b bg-zinc-800 border-zinc-700 last:border-none">
-                  <th scope="row" className="px-6 py-4 font-medium text-zinc-400 whitespace-nowrap dark:text-white">
-                    {item.product_name}
-                  </th>
-                  <td className="px-6 py-4">{item.brand}</td>
-                  <td className="px-6 py-4">{item.size}</td>
-                  <td className="px-6 py-4">{item.quantity}</td>
-                  <td className="px-6 py-4">£{item.price}</td>
-                  <td className="px-6 py-4">
-                    <img
-                      src={item.image_url || placeholderImageUrl}
-                      alt={item.product_name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => openEditModal(item)}
-                      className="bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteInventoryItem(item.id)}
-                      className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Ensure wrapper uses bg-zinc-800 */}
+        <Table
+          aria-label="Inventory Table"
+          selectionMode="none"
+          classNames={classNames}
+        >
+          <TableHeader>
+            <TableColumn className={classNames.th}>Product Name</TableColumn>
+            <TableColumn className={classNames.th}>Brand</TableColumn>
+            <TableColumn className={classNames.th}>Size</TableColumn>
+            <TableColumn className={classNames.th}>Quantity</TableColumn>
+            <TableColumn className={classNames.th}>Price</TableColumn>
+            <TableColumn className={classNames.th}>Image</TableColumn>
+            <TableColumn className={classNames.th}>Actions</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {inventory.map((item) => (
+              <TableRow key={item.id} className={classNames.row}>
+                <TableCell className={classNames.td}>{item.product_name}</TableCell>
+                <TableCell className={classNames.td}>{item.brand}</TableCell>
+                <TableCell className={classNames.td}>{item.size}</TableCell>
+                <TableCell className={classNames.td}>{item.quantity}</TableCell>
+                <TableCell className={classNames.td}>£{item.price}</TableCell>
+                <TableCell className={classNames.td}>
+                  <img
+                    src={item.image_url || placeholderImageUrl}
+                    alt={item.product_name}
+                    className={classNames.img}
+                  />
+                </TableCell>
+                <TableCell className={classNames.td}>
+                  <NextUIButton
+                    onPress={() => openEditModal(item)}
+                    className={classNames.buttonEdit}
+                  >
+                    Edit
+                  </NextUIButton>
+                  <NextUIButton
+                    onPress={() => deleteInventoryItem(item.id)}
+                    className={classNames.buttonDelete}
+                  >
+                    Delete
+                  </NextUIButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
-      
+
       {/* Modal for adding/editing items */}
-      <div className="relative">
-        <AddItemModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onAddItem={addOrUpdateInventoryItem}
-          item={selectedItem}
-        />
-      </div>
+      <AddItemModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddItem={addOrUpdateInventoryItem}
+        item={selectedItem}
+      />
     </Layout>
   );
 };

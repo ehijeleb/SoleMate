@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button as NextUIButton } from "@nextui-org/react";
 import { supabase } from '../../../lib/supabaseClient';
-
 import Layout from '../Layout';
 import AddSaleModal from './AddSaleModal';
 
@@ -10,6 +10,8 @@ const Sales = () => {
   const [filteredSales, setFilteredSales] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchInventory();
@@ -21,39 +23,34 @@ const Sales = () => {
   }, [sales, currentDate]);
 
   const fetchInventory = async () => {
+    setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('user_id', user.id);
+    const { data, error } = await supabase.from('inventory').select('*').eq('user_id', user.id);
 
     if (error) {
-      console.error("Error fetching inventory:", error.message);
+      setError(error.message);
     } else {
       setInventory(data);
-      console.log('Fetched inventory:', data);
     }
+    setLoading(false);
   };
 
   const fetchSales = async () => {
+    setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('sales')
-      .select('*')
-      .eq('user_id', user.id);
+    const { data, error } = await supabase.from('sales').select('*').eq('user_id', user.id);
 
     if (error) {
-      console.error("Error fetching sales:", error.message);
+      setError(error.message);
     } else {
       setSales(data);
-      console.log('Fetched sales:', data);
     }
+    setLoading(false);
   };
 
   const filterSalesByMonth = () => {
-    const month = currentDate.getMonth() + 1; // JavaScript months are 0-based
+    const month = currentDate.getMonth() + 1;
     const year = currentDate.getFullYear();
-
     const filtered = sales.filter(sale => {
       const saleDate = new Date(sale.sale_date);
       return saleDate.getMonth() + 1 === month && saleDate.getFullYear() === year;
@@ -62,10 +59,7 @@ const Sales = () => {
   };
 
   const handleAddSale = async (sale) => {
-    console.log('Attempting to add sale...');
-
     const { data: { user } } = await supabase.auth.getUser();
-
     const itemInInventory = inventory.find(item => item.id.toString() === sale.selectedItemId.toString());
 
     if (!itemInInventory) {
@@ -74,36 +68,26 @@ const Sales = () => {
     }
 
     const calculatedProfit = sale.priceSold - (itemInInventory.price * sale.quantity);
-
-    const { error } = await supabase
-      .from('sales')
-      .insert([{
-        user_id: user.id,
-        inventory_item_id: itemInInventory.id,
-        product_name: itemInInventory.product_name,
-        brand: itemInInventory.brand,
-        size: itemInInventory.size,
-        quantity_sold: sale.quantity,
-        price_sold: sale.priceSold,
-        sale_date: sale.saleDate,
-        profit: calculatedProfit
-      }]);
+    const { error } = await supabase.from('sales').insert([{
+      user_id: user.id,
+      inventory_item_id: itemInInventory.id,
+      product_name: itemInInventory.product_name,
+      brand: itemInInventory.brand,
+      size: itemInInventory.size,
+      quantity_sold: sale.quantity,
+      price_sold: sale.priceSold,
+      sale_date: sale.saleDate,
+      profit: calculatedProfit
+    }]);
 
     if (error) {
       console.error('Error adding sale:', error.message);
     } else {
       if (itemInInventory.quantity - sale.quantity <= 0) {
-        await supabase
-          .from('inventory')
-          .delete()
-          .eq('id', itemInInventory.id);
+        await supabase.from('inventory').delete().eq('id', itemInInventory.id);
       } else {
-        await supabase
-          .from('inventory')
-          .update({ quantity: itemInInventory.quantity - sale.quantity })
-          .eq('id', itemInInventory.id);
+        await supabase.from('inventory').update({ quantity: itemInInventory.quantity - sale.quantity }).eq('id', itemInInventory.id);
       }
-
       fetchSales();
       fetchInventory();
       setIsModalOpen(false);
@@ -111,10 +95,7 @@ const Sales = () => {
   };
 
   const handleDeleteSale = async (saleId) => {
-    const { error } = await supabase
-      .from('sales')
-      .delete()
-      .eq('id', saleId);
+    const { error } = await supabase.from('sales').delete().eq('id', saleId);
 
     if (error) {
       console.error('Error deleting sale:', error.message);
@@ -123,122 +104,109 @@ const Sales = () => {
     }
   };
 
-  const openAddSaleModal = () => {
-    setIsModalOpen(true);
-  };
+  const openAddSaleModal = () => setIsModalOpen(true);
+  const closeAddSaleModal = () => setIsModalOpen(false);
 
-  const closeAddSaleModal = () => {
-    setIsModalOpen(false);
-  };
+  const calculateTotalSalesValue = () => filteredSales.reduce((total, sale) => total + sale.price_sold, 0);
 
-  const calculateTotalSalesValue = () => {
-    return filteredSales.reduce((total, sale) => total + sale.price_sold, 0);
-  };
+  const handlePreviousMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)));
+  const handleNextMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)));
 
-  const handlePreviousMonth = () => {
-    const previousMonth = new Date(currentDate.setMonth(currentDate.getMonth() - 1));
-    setCurrentDate(new Date(previousMonth));
-  };
-
-  const handleNextMonth = () => {
-    const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
-    setCurrentDate(new Date(nextMonth));
+  const classNames = {
+    base: "w-full relative",  
+    wrapper: "p-4 bg-zinc-800",  
+    table: "min-w-full auto", 
+    th: "px-6 py-3 bg-zinc-700 text-zinc-400 text-left",
+    td: "px-6 py-4 text-zinc-400",
+    row: "bg-zinc-800 last:border-none",
+    buttonEdit: "bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2",
+    buttonDelete: "bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors",
   };
 
   return (
     <Layout>
-      <div className="relative ">
-        <h2 className="text-3xl  text-violet-300 font-bold mb-8">Sales</h2>
-        
-        <div className="flex justify-around items-center mb-4">
-          <div>
-          <button
-            onClick={openAddSaleModal}
+      <div className="relative">
+        <h2 className="text-3xl text-violet-300 font-bold mb-8">Sales</h2>
+
+        <div className="flex justify-between items-center mb-4">
+          <NextUIButton
+            onPress={openAddSaleModal}
             className="bg-violet-500 text-white py-2 px-4 rounded-3xl hover:bg-violet-600 transition-colors"
           >
             Add New Sale
-            </button>
-          </div>
+          </NextUIButton>
 
-          <div className="flex items-center space-x-4 ">
-          <button
-            onClick={handlePreviousMonth}
-            className="bg-gray-500 text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M14.5 17L9.5 12L14.5 7" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div className="flex items-center space-x-4">
+            <NextUIButton
+              onPress={handlePreviousMonth}
+              className="bg-gray-500 text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
+            >
+              &lt;
+            </NextUIButton>
             <span className="text-violet-200 font-bold">
               {currentDate.toLocaleString('default', { month: 'long' })} {currentDate.getFullYear()}
             </span>
-            <button
-              onClick={handleNextMonth}
+            <NextUIButton
+              onPress={handleNextMonth}
               className="bg-gray-500 text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path xmlns="http://www.w3.org/2000/svg" d="M9.5 7L14.5 12L9.5 17" stroke="white" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            </button>
-            </div>
-            <div className="text-violet-200">
-              <p>Total Sales This Month: <span className="font-bold">£{calculateTotalSalesValue()}</span></p>
-            </div>
-          
+              &gt;
+            </NextUIButton>
+          </div>
+
+          <div className="text-violet-200">
+            <p>Total Sales This Month: <span className="font-bold">£{calculateTotalSalesValue()}</span></p>
+          </div>
         </div>
 
-        <div className="relative overflow-x-auto rounded-xl bg-zinc-800 border border-zinc-700">
-          <table className="w-full text-sm text-left text-zinc-400">
-            <thead className="text-xs uppercase bg-zinc-800 text-zinc-400">
-              <tr className="border-b border-zinc-700">
-                <th scope="col" className="px-6 py-3">Product Name</th>
-                <th scope="col" className="px-6 py-3">Quantity Sold</th>
-                <th scope="col" className="px-6 py-3">Price Sold</th>
-                <th scope="col" className="px-6 py-3">Profit</th>
-                <th scope="col" className="px-6 py-3">Date Sold</th>
-                <th scope="col" className="px-6 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSales.length > 0 ? (
-                filteredSales.map(sale => (
-                  <tr key={sale.id} className="border-b border-zinc-700">
-                    <td className="px-6 py-4">{sale.product_name}</td>
-                    <td className="px-6 py-4">{sale.quantity_sold}</td>
-                    <td className="px-6 py-4">£{sale.price_sold}</td>
-                    <td className="px-6 py-4">£{sale.profit.toFixed(2)}</td>
-                    <td className="px-6 py-4">{sale.sale_date}</td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleDeleteSale(sale.id)}
-                        className="bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="px-6 py-4 text-center" colSpan="6">
-                    No Sales Made This Month.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-              
-          
-        </div>
+        {filteredSales.length === 0 && (
+          <div className="text-center text-violet-200 mb-4">
+            No Sales Made This Month.
+          </div>
+        )}
 
-        <div className="relative">
-          <AddSaleModal
-            isOpen={isModalOpen}
-            onClose={closeAddSaleModal}
-            onAddSale={handleAddSale}
-            inventory={inventory}
-          />
-        </div>
+        <Table
+          aria-label="Sales Table"
+          selectionMode="none"
+          classNames={classNames}
+        >
+          <TableHeader>
+            <TableColumn className={classNames.th}>Product Name</TableColumn>
+            <TableColumn className={classNames.th}>Quantity Sold</TableColumn>
+            <TableColumn className={classNames.th}>Price Sold</TableColumn>
+            <TableColumn className={classNames.th}>Profit</TableColumn>
+            <TableColumn className={classNames.th}>Date Sold</TableColumn>
+            <TableColumn className={classNames.th}>Actions</TableColumn>
+          </TableHeader>
+          <TableBody>
+            {filteredSales.map((sale) => (
+              <TableRow key={sale.id} className={classNames.row}>
+                <TableCell className={classNames.td}>{sale.product_name}</TableCell>
+                <TableCell className={classNames.td}>{sale.quantity_sold}</TableCell>
+                <TableCell className={classNames.td}>£{sale.price_sold}</TableCell>
+                <TableCell className={classNames.td}>{sale.profit ? sale.profit.toFixed(2) : 'N/A'}</TableCell>
+                <TableCell className={classNames.td}>
+                  {sale.sale_date ? new Date(sale.sale_date).toLocaleDateString() : 'N/A'}
+                </TableCell>
+                <TableCell className={classNames.td}>
+                  <NextUIButton
+                    onPress={() => handleDeleteSale(sale.id)}
+                    className={classNames.buttonDelete}
+                  >
+                    Delete
+                  </NextUIButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <AddSaleModal
+          isOpen={isModalOpen}
+          onClose={closeAddSaleModal}
+          onAddSale={handleAddSale}
+          inventory={inventory}
+        />
       </div>
     </Layout>
   );
