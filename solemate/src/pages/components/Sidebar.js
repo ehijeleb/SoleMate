@@ -95,9 +95,9 @@ const Sidebar = () => {
           edge="start"
           aria-label="menu"
           onClick={toggleDrawer('left', true)}
-          className="text-white ml-2"
+          className="text-white ml-1"
         >
-          <MenuIcon className=' ml-3 text-zinc-400' />
+          <MenuIcon className=' text-zinc-400' />
         </IconButton>
   
         {/* Drawer Component */}

@@ -59,10 +59,11 @@ const DashboardBrandBreakdown = () => {
 
   const calculateBrandBreakdown = (inventoryData) => {
     const brandCount = {};
-
+  
     inventoryData.forEach(item => {
       if (item.brand) {
-        brandCount[item.brand] = (brandCount[item.brand] || 0) + 1;
+        // Multiply by the quantity of the item instead of just incrementing by 1
+        brandCount[item.brand] = (brandCount[item.brand] || 0) + item.quantity;
       }
     });
 
@@ -102,6 +103,7 @@ const DashboardBrandBreakdown = () => {
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent hideLabel />}
+                className='bg-zinc-900 border-none'
               />
               <Pie
                 data={brandData}
