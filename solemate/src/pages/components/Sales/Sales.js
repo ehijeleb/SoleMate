@@ -117,7 +117,7 @@ const Sales = () => {
     base: "w-full relative",  
     wrapper: "p-4 bg-zinc-800",  
     table: "min-w-full auto", 
-    th: "px-6 py-3 bg-zinc-700 text-zinc-400 text-left",
+    th: "px-6 py-3 bg-zinc-700 text-zinc-400 text-left font-bold",
     td: "px-6 py-4 text-zinc-400",
     row: "bg-zinc-800 last:border-none",
     buttonEdit: "bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2",
