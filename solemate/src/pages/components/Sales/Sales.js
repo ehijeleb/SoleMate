@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button as NextUIButton } from "@nextui-org/react";
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button as NextUIButton, Spinner } from "@nextui-org/react";
 import { supabase } from '../../../lib/supabaseClient';
 import Layout from '../Layout';
 import AddSaleModal from './AddSaleModal';
+
 
 const Sales = () => {
   const [inventory, setInventory] = useState([]);
@@ -10,7 +11,7 @@ const Sales = () => {
   const [filteredSales, setFilteredSales] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // New loading state
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -32,11 +33,11 @@ const Sales = () => {
     } else {
       setInventory(data);
     }
-    setLoading(false);
+    setLoading(false); // Set loading to false after fetching data
   };
 
   const fetchSales = async () => {
-    setLoading(true);
+    setLoading(true); // Set loading to true before fetching data
     const { data: { user } } = await supabase.auth.getUser();
     const { data, error } = await supabase.from('sales').select('*').eq('user_id', user.id);
 
@@ -45,7 +46,7 @@ const Sales = () => {
     } else {
       setSales(data);
     }
-    setLoading(false);
+    setLoading(false); // Set loading to false after fetching data
   };
 
   const filterSalesByMonth = () => {
@@ -159,47 +160,51 @@ const Sales = () => {
           </div>
         </div>
 
-        {filteredSales.length === 0 && (
+        {loading ? (
+          <div className="text-center">
+            <Spinner size="md" color='white'  />
+          </div>
+        ) : filteredSales.length === 0 ? (
           <div className="text-center text-violet-200 mb-4">
             No Sales Made This Month.
           </div>
+        ) : (
+          <Table
+            aria-label="Sales Table"
+            selectionMode="none"
+            classNames={classNames}
+          >
+            <TableHeader>
+              <TableColumn className={classNames.th}>Product Name</TableColumn>
+              <TableColumn className={classNames.th}>Quantity Sold</TableColumn>
+              <TableColumn className={classNames.th}>Price Sold</TableColumn>
+              <TableColumn className={classNames.th}>Profit</TableColumn>
+              <TableColumn className={classNames.th}>Date Sold</TableColumn>
+              <TableColumn className={classNames.th}>Actions</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {filteredSales.map((sale) => (
+                <TableRow key={sale.id} className={classNames.row}>
+                  <TableCell className={classNames.td}>{sale.product_name}</TableCell>
+                  <TableCell className={classNames.td}>{sale.quantity_sold}</TableCell>
+                  <TableCell className={classNames.td}>£{sale.price_sold}</TableCell>
+                  <TableCell className={classNames.td}>{sale.profit ? sale.profit.toFixed(2) : 'N/A'}</TableCell>
+                  <TableCell className={classNames.td}>
+                    {sale.sale_date ? new Date(sale.sale_date).toLocaleDateString() : 'N/A'}
+                  </TableCell>
+                  <TableCell className={classNames.td}>
+                    <NextUIButton
+                      onPress={() => handleDeleteSale(sale.id)}
+                      className={classNames.buttonDelete}
+                    >
+                      Delete
+                    </NextUIButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-
-        <Table
-          aria-label="Sales Table"
-          selectionMode="none"
-          classNames={classNames}
-        >
-          <TableHeader>
-            <TableColumn className={classNames.th}>Product Name</TableColumn>
-            <TableColumn className={classNames.th}>Quantity Sold</TableColumn>
-            <TableColumn className={classNames.th}>Price Sold</TableColumn>
-            <TableColumn className={classNames.th}>Profit</TableColumn>
-            <TableColumn className={classNames.th}>Date Sold</TableColumn>
-            <TableColumn className={classNames.th}>Actions</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {filteredSales.map((sale) => (
-              <TableRow key={sale.id} className={classNames.row}>
-                <TableCell className={classNames.td}>{sale.product_name}</TableCell>
-                <TableCell className={classNames.td}>{sale.quantity_sold}</TableCell>
-                <TableCell className={classNames.td}>£{sale.price_sold}</TableCell>
-                <TableCell className={classNames.td}>{sale.profit ? sale.profit.toFixed(2) : 'N/A'}</TableCell>
-                <TableCell className={classNames.td}>
-                  {sale.sale_date ? new Date(sale.sale_date).toLocaleDateString() : 'N/A'}
-                </TableCell>
-                <TableCell className={classNames.td}>
-                  <NextUIButton
-                    onPress={() => handleDeleteSale(sale.id)}
-                    className={classNames.buttonDelete}
-                  >
-                    Delete
-                  </NextUIButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
 
         <AddSaleModal
           isOpen={isModalOpen}
