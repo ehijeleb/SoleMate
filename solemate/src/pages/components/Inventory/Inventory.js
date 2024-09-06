@@ -17,7 +17,7 @@ const Inventory = () => {
     fetchInventory();
   }, []);
 
-  const fetchInventory = async () => {
+  const fetchInventory = async () => { 
     setLoading(true);
     setError(null);
 

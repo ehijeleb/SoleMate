@@ -52,7 +52,7 @@ const Sidebar = () => {
       onClick={toggleDrawer(anchor, true)}
       onKeyDown={toggleDrawer(anchor, true)}
     >
-      <ul className="space-y-2 mt-8">
+      <ul className=" mt-8">
         {/* Dashboard Link */}
         <li className="border-b border-gray-700">
           <Link href="/dashboard" className="flex items-center p-4 hover:bg-[#18181b]">
@@ -95,9 +95,9 @@ const Sidebar = () => {
           edge="start"
           aria-label="menu"
           onClick={toggleDrawer('left', true)}
-          className="text-white ml-1"
+          className="text-white ml-2"
         >
-          <MenuIcon />
+          <MenuIcon className=' ml-3 text-zinc-400' />
         </IconButton>
   
         {/* Drawer Component */}
