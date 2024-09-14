@@ -64,14 +64,14 @@ const Login = () => {
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: "url('/images/background.webp')" }}
     >
-      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-3xl text-center text-purple-900 font-extrabold tracking-wider  mb-8">SoleMate</h2>
+      <div className="bg-zinc-800 bg-opacity-100 border  p-8 rounded-2xl shadow-lg w-full max-w-md">
+        <h2 className="text-3xl text-center text-violet-300 font-extrabold tracking-wider  mb-8">SoleMate</h2>
   
         <form onSubmit={isRegister ? handleRegister : handleLogin} className="space-y-4">
           {isRegister && (
             <>
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-zinc-700">First Name</label>
+                <label htmlFor="firstName" className="block text-sm font-medium text-violet-200">First Name</label>
                 <input
                   type="text"
                   id="firstName"
@@ -82,7 +82,7 @@ const Login = () => {
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-zinc-700">Last Name</label>
+                <label htmlFor="lastName" className="block text-sm font-medium text-violet-200">Last Name</label>
                 <input
                   type="text"
                   id="lastName"
@@ -95,7 +95,7 @@ const Login = () => {
             </>
           )}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-700">Email Address</label>
+            <label htmlFor="email" className="block text-sm font-medium text-violet-200">Email Address</label>
             <input
               type="email"
               id="email"
@@ -106,7 +106,7 @@ const Login = () => {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-700">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-violet-200">Password</label>
             <input
               type="password"
               id="password"
@@ -118,7 +118,7 @@ const Login = () => {
           </div>
           {isRegister && (
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-violet-200">Confirm Password</label>
               <input
                 type="password"
                 id="confirmPassword"
@@ -131,17 +131,17 @@ const Login = () => {
           )}
           <button
             type="submit"
-            className="w-full bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 focus:outline-none focus:ring focus:ring-purple-500 focus:ring-opacity-50 transition-colors"
+            className="w-full bg-violet-500 text-white py-2 px-4 rounded-md hover:bg-violet-600 focus:outline-none focus:ring focus:ring-purple-500 focus:ring-opacity-50 transition-colors"
           >
             {isRegister ? "Register" : "Login"}
           </button>
         </form>
   
-        <p className="mt-4 text-center text-sm text-zinc-700">
+        <p className="mt-4 text-center text-sm text-violet-300">
           {isRegister ? "Already have an account? " : "Don't have an account? "}
           <span
             onClick={() => setIsRegister(!isRegister)}
-            className="text-purple-500 cursor-pointer hover:underline"
+            className="text-violet-500 cursor-pointer hover:underline"
           >
             {isRegister ? "Login" : "Register"}
           </span>
