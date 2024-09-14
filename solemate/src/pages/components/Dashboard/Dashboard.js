@@ -12,6 +12,7 @@ const Dashboard = () => {
     const [totalSalesCount, setTotalSalesCount] = useState(0);
     const [totalSpent, setTotalSpent] = useState(0);
     const [totalSpentTimePeriod, setTotalSpentTimePeriod] = useState('All Time'); 
+    const [totalItems, setTotalItems] = useState(0);
     const [totalProfit, setTotalProfit] = useState(0);
     const [profitTimePeriod, setProfitTimePeriod] = useState('All Time'); 
 
