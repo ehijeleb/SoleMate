@@ -19,7 +19,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"; // Imported from your chart file
+} from "@/components/ui/chart"; 
 
 export default function DashboardProfitChart() {
   const [profitData, setProfitData] = useState([]);
@@ -81,12 +81,13 @@ export default function DashboardProfitChart() {
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
-                tickFormatter={(value) => value.slice(0, 3)} // Abbreviated month names
+                tickFormatter={(value) => value.slice(0, 3)} 
               />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent hideLabel />}
+                className='bg-zinc-900 border-none'
               />
               <Bar dataKey="profit" fill="#a78bfa" radius={8} />
             </BarChart>

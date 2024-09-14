@@ -14,34 +14,34 @@ const Sidebar = () => {
     left: false,
   });
 
-  // State to track if the sidebar should stay open after a click
+ 
   const [clicked, setClicked] = useState(false);
 
-  // Hover state to temporarily open the sidebar
+
   const [hovered, setHovered] = useState(false);
 
-  // Toggle the sidebar open/close when clicked
+  
   const toggleDrawer = (anchor, open) => (event) => {
     if (event.type === 'keydown' && (event.key === 'Tab' || event.key === 'Shift')) {
       return;
     }
-    setClicked(open); // Track if the sidebar was clicked to keep it open
+    setClicked(open); 
     setState({ ...state, [anchor]: open });
   };
 
-  // Handle mouse enter to temporarily show the sidebar
+  
   const handleMouseEnter = () => {
     if (!clicked) {
       setHovered(true);
-      setState({ ...state, left: true }); // Show the sidebar on hover
+      setState({ ...state, left: true }); 
     }
   };
 
-  // Handle mouse leave to hide the sidebar if not clicked
+
   const handleMouseLeave = () => {
     if (!clicked) {
       setHovered(false);
-      setState({ ...state, left: false }); // Hide the sidebar on mouse leave if not clicked
+      setState({ ...state, left: false }); 
     }
   };
 

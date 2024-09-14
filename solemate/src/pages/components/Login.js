@@ -11,8 +11,7 @@ const Login = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
-  const router = useRouter(); // Use Next.js router for navigation
-
+  const router = useRouter(); 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(null);
@@ -38,7 +37,7 @@ const Login = () => {
       setError(signUpError.message);
     } else {
       setMessage("Registration successful and logged in!");
-      router.push('/inventory'); // Navigate to Inventory after registration
+      router.push('/inventory'); 
     }
   };
 
@@ -56,7 +55,7 @@ const Login = () => {
       setError(error.message);
     } else {
       setMessage("Login successful!");
-      router.push('/inventory'); // Navigate to Inventory after login
+      router.push('/dashboard'); 
     }
   };
 

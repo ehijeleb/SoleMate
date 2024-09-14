@@ -62,7 +62,6 @@ const DashboardBrandBreakdown = () => {
   
     inventoryData.forEach(item => {
       if (item.brand) {
-        // Multiply by the quantity of the item instead of just incrementing by 1
         brandCount[item.brand] = (brandCount[item.brand] || 0) + item.quantity;
       }
     });
@@ -70,7 +69,7 @@ const DashboardBrandBreakdown = () => {
     const formattedBrandData = Object.keys(brandCount).map((brand, index) => ({
       name: brand,
       value: brandCount[brand],
-      fill: COLORS[index % COLORS.length]  // Cycle through colors
+      fill: COLORS[index % COLORS.length]
     }));
 
     setBrandData(formattedBrandData);

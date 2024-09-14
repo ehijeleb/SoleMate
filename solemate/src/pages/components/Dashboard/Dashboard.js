@@ -11,10 +11,9 @@ const Dashboard = () => {
     const [totalRevenue, setTotalRevenue] = useState(0);
     const [totalSalesCount, setTotalSalesCount] = useState(0);
     const [totalSpent, setTotalSpent] = useState(0);
-    const [totalSpentTimePeriod, setTotalSpentTimePeriod] = useState('All Time'); // Independent state for Total Spent
-    const [totalItems, setTotalItems] = useState(0);
+    const [totalSpentTimePeriod, setTotalSpentTimePeriod] = useState('All Time'); 
     const [totalProfit, setTotalProfit] = useState(0);
-    const [profitTimePeriod, setProfitTimePeriod] = useState('All Time'); // Independent state for Profit
+    const [profitTimePeriod, setProfitTimePeriod] = useState('All Time'); 
 
     useEffect(() => {
         const fetchUserName = async () => {
@@ -31,13 +30,13 @@ const Dashboard = () => {
             const { data: { user } } = await supabase.auth.getUser();
             const { data: salesData, error: salesError } = await supabase
               .from('sales')
-              .select('*')  // Ensure this includes 'sale_date' and 'profit'
+              .select('*')  
               .eq('user_id', user.id);
           
             if (salesError) {
               console.error("Error fetching sales:", salesError.message);
             } else {
-              console.log('Fetched sales data:', salesData);  // Log the full sales data
+              console.log('Fetched sales data:', salesData); 
               setSales(salesData);
               calculateTotalRevenueAndSales(salesData);  // Calculate total revenue and sales count
             }
@@ -55,7 +54,7 @@ const Dashboard = () => {
             if (inventoryError) {
                 console.error("Error fetching inventory:", inventoryError.message);
             } else {
-                console.log('Fetched inventory data:', inventoryData);  // Debugging log
+                console.log('Fetched inventory data:', inventoryData);
                 setInventory(inventoryData);
             }
         };
@@ -70,10 +69,10 @@ const Dashboard = () => {
     }, [sales, inventory, totalSpentTimePeriod]);
 
     useEffect(() => {
-        calculateTotalProfit(sales);  // Call calculateTotalProfit after definition
+        calculateTotalProfit(sales); 
     }, [sales, profitTimePeriod]);
 
-    // Define calculateTotalProfit before using it
+
     const calculateTotalProfit = (sales) => {
         const filteredSales = filterSalesByTimePeriod(sales, profitTimePeriod);
         console.log("Filtered sales for profit:", filteredSales);  // Debugging log
@@ -161,7 +160,6 @@ const Dashboard = () => {
             filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastYear);
             break;
           default:
-            // 'All Time' case, no filtering needed
             filteredData = data;
             break;
         }

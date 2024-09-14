@@ -15,7 +15,7 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
 
   const [newItem, setNewItem] = useState(initialNewItemState);
 
-  // Predefined options for the brands
+
   const brandOptions = {
     shoes: ['Nike', 'Adidas', 'New Balance', 'Air Jordan', 'Yeezy', 'ASICS', 'Other'],
     clothing: ['Nike', 'Fear of God', 'Kith', 'Supreme', 'Sp5der', 'Other'],
@@ -38,7 +38,7 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
     }
   }, [item]);
 
-  // Helper function to capitalize the first letter
+
   const capitalizeFirstLetter = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
@@ -51,20 +51,20 @@ const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
       price: newItem.price ? parseFloat(newItem.price) : null,
     };
     onAddItem(validatedItem);
-    handleReset();  // Reset form after submission
-    onClose();  // Close the modal after adding the item
+    handleReset();  
+    onClose();  
   };
 
   const handleReset = () => {
-    setNewItem(initialNewItemState);  // Reset newItem state
+    setNewItem(initialNewItemState);  
   };
 
   const handleTypeChange = (selectedKeys) => {
     const selectedValue = Array.from(selectedKeys).join(", ");
     setNewItem((prevItem) => ({
       ...prevItem,
-      item_type: selectedValue.toLowerCase(), // Store lowercase value for brand matching
-      item_type_display: capitalizeFirstLetter(selectedValue), // Display capitalized version
+      item_type: selectedValue.toLowerCase(),
+      item_type_display: capitalizeFirstLetter(selectedValue), 
       brand: '',
     }));
   };

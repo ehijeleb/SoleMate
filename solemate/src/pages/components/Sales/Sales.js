@@ -33,11 +33,11 @@ const Sales = () => {
     } else {
       setInventory(data);
     }
-    setLoading(false); // Set loading to false after fetching data
+    setLoading(false); 
   };
 
   const fetchSales = async () => {
-    setLoading(true); // Set loading to true before fetching data
+    setLoading(true); 
     const { data: { user } } = await supabase.auth.getUser();
     const { data, error } = await supabase.from('sales').select('*').eq('user_id', user.id);
 
@@ -46,7 +46,7 @@ const Sales = () => {
     } else {
       setSales(data);
     }
-    setLoading(false); // Set loading to false after fetching data
+    setLoading(false);
   };
 
   const filterSalesByMonth = () => {

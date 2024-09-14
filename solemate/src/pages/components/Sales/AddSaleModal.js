@@ -9,7 +9,6 @@ const AddSaleModal = ({ isOpen, onClose, onAddSale, inventory }) => {
 
   useEffect(() => {
     if (!isOpen) {
-      // Reset form fields when the modal is closed
       setSelectedItemId('');
       setQuantity('');
       setPriceSold('');
@@ -20,7 +19,7 @@ const AddSaleModal = ({ isOpen, onClose, onAddSale, inventory }) => {
   const handleSubmit = () => {
     const sale = { selectedItemId, quantity, priceSold, saleDate };
     onAddSale(sale);
-    onClose(); // Close modal after submission
+    onClose()
   };
 
   return (
