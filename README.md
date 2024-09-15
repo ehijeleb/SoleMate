@@ -1,70 +1,92 @@
-# Getting Started with Create React App
+# SoleMate
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+SoleMate is a web application designed for sneaker resellers to track their inventory, sales, profit, and revenue. Built using Next.js for the frontend and Supabase for both image storage and PostgreSQL database services, SoleMate makes it easy to manage and track your sneaker business in one place.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Dashboard**: View a summary of your total profit, revenue, and spending. Get a detailed brand breakdown of your inventory.
+- **Inventory Management**: Add, edit, and manage sneakers in your inventory, including details like brand, price, and quantity.
+- **Sales Tracking**: Keep track of sales, including sold items, revenue generated, and the cost of goods sold.
+- **Authentication**: Secure login system using Supabase Auth for user authentication.
+- **Responsive Design**: Fully responsive layout for use on any device.
+- **Deployed on Vercel**: SoleMate is deployed using Vercel for seamless performance and scalability.
 
-### `npm start`
+## Technologies Used
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Frontend**: [Next.js](https://nextjs.org/) (React framework)
+- **Backend**: [Supabase](https://supabase.io/) for PostgreSQL and image storage
+- **Authentication**: Supabase Auth
+- **Deployment**: [Vercel](https://vercel.com/) for hosting
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Pages
 
-### `npm test`
+1. **Dashboard**: Provides an overview of your business performance. It includes:
+   - Profit, revenue, and total spent.
+   - A breakdown of your inventory by brand.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. **Inventory**: Manage your inventory with the ability to:
+   - Add new sneakers to track your stock.
+   - Update existing entries with price or brand information.
+   - View your inventory list.
 
-### `npm run build`
+3. **Sales**: Track your sales by:
+   - Adding sales entries for sold items.
+   - Viewing the revenue generated from individual sales.
+   - Managing your overall sales history.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Setup
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Prerequisites
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Node.js (v14 or higher)
+- NPM or Yarn
+- Supabase account
+- Vercel account for deployment
 
-### `npm run eject`
+### Installation
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. Clone the repository:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    ```bash
+    git clone https://github.com/ehijeleb/SoleMate.git
+    cd solemate
+    ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+2. Install dependencies:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+    ```bash
+    npm install
+    ```
 
-## Learn More
+3. Set up environment variables:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+    Create a `.env.local` file in the root of your project with the following Supabase and Vercel environment variables:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    ```bash
+    NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+    ```
 
-### Code Splitting
+4. Start the development server:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+    ```bash
+    npm run dev
+    ```
 
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+5. Visit the app at `http://localhost:3000`.
 
 ### Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+To deploy SoleMate on Vercel:
 
-### `npm run build` fails to minify
+1. Push your project to GitHub or another Git repository.
+2. Go to [Vercel](https://vercel.com/), connect your repository, and follow the deployment steps.
+3. Set up your environment variables in Vercel to match your `.env.local` file.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Contributing
+
+Contributions are welcome! Feel free to submit a pull request or open an issue if you have suggestions or bug reports.
+
+## License
+
+This project is licensed under the MIT License.
