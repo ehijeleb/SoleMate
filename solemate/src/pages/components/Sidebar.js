@@ -14,7 +14,7 @@ const Sidebar = () => {
     left: false,
   });
 
- 
+
   const [clicked, setClicked] = useState(false);
 
 
@@ -89,13 +89,13 @@ const Sidebar = () => {
   );
   
     return (
-      <div className='bg-[#111113] w-12 border-r border-zinc-500 '> {/* Using custom color */}
+      <div className='bg-[#111113] w-12 border-r border-zinc-500  '>
         {/* Menu Button */}
         <IconButton
           edge="start"
           aria-label="menu"
           onClick={toggleDrawer('left', true)}
-          className="text-white ml-1"
+          className="text-white ml-2"
         >
           <MenuIcon className=' text-zinc-400' />
         </IconButton>
