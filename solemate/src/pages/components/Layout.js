@@ -1,22 +1,14 @@
 import React from 'react';
-import Sidebar from './Sidebar'; // Drawer-based Sidebar
-import Navbar from './Navbar';  // Your Navbar component
+import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex">
-      {/* Sidebar Drawer */}
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--surface-0)' }}>
       <Sidebar />
-      
-      {/* Main content area */}
-      <div className="flex-1 min-h-screen bg-zinc-900 relative">
-        {/* Navbar */}
-        <Navbar />
-        
-        {/* Page content */}
-        <div className="p-4 mt-16">
+      <div className="flex-1 flex flex-col" style={{ marginLeft: '240px' }}>
+        <main className="flex-1 p-7">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );

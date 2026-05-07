@@ -1,132 +1,112 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from 'react';
-import { Pie, PieChart, Cell } from "recharts";
+import { Pie, PieChart, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '../../../lib/supabaseClient';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { TrendingUp } from "lucide-react";
-import { Spinner } from "@nextui-org/spinner";
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#8dd1e1', '#d0ed57', '#a4de6c'];
+const PALETTE = [
+  '#8b5cf6', '#10b981', '#f59e0b', '#38bdf8',
+  '#f472b6', '#a3e635', '#fb923c', '#818cf8',
+];
+
+const CustomTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      className="px-3 py-2 rounded-lg text-sm"
+      style={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.08)', color: '#f1f5f9' }}
+    >
+      <p className="font-semibold">{payload[0].name}</p>
+      <p style={{ color: payload[0].payload.fill }}>{payload[0].value} units</p>
+    </div>
+  );
+};
 
 const DashboardBrandBreakdown = () => {
-  const [inventory, setInventory] = useState([]);
-  const [brandData, setBrandData] = useState([]);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchInventory();
-  }, []);
-
-  const fetchInventory = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+    const fetch = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
 
-      const { data, error } = await supabase
+      const { data: inv } = await supabase
         .from('inventory')
-        .select('*')
+        .select('item_type, quantity')
         .eq('user_id', user.id);
 
-      if (error) {
-        setError(error.message);
-      } else {
-        setInventory(data);
-        calculateBrandBreakdown(data);
+      if (inv) {
+        const counts = {};
+        inv.forEach((item) => {
+          const key = item.item_type || 'Other';
+          counts[key] = (counts[key] || 0) + (item.quantity || 0);
+        });
+        const formatted = Object.entries(counts).map(([name, value], i) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
+          value,
+          fill: PALETTE[i % PALETTE.length],
+        }));
+        setData(formatted);
       }
-    } catch (err) {
-      setError("Error fetching inventory");
-    }
+      setLoading(false);
+    };
+    fetch();
+  }, []);
 
-    setLoading(false);
-  };
-
-  const calculateBrandBreakdown = (inventoryData) => {
-    const brandCount = {};
-  
-    inventoryData.forEach(item => {
-      if (item.brand) {
-        brandCount[item.brand] = (brandCount[item.brand] || 0) + item.quantity;
-      }
-    });
-
-    const formattedBrandData = Object.keys(brandCount).map((brand, index) => ({
-      name: brand,
-      value: brandCount[brand],
-      fill: COLORS[index % COLORS.length]
-    }));
-
-    setBrandData(formattedBrandData);
-  };
-
-  const chartConfig = brandData.reduce((acc, brand) => {
-    acc[brand.name] = { label: brand.name, color: brand.fill };
-    return acc;
-  }, {}); 
-
-  if (loading) return <Spinner color="primary" />;
+  if (loading) return (
+    <div className="flex items-center justify-center h-40">
+      <div className="w-5 h-5 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+    </div>
+  );
 
   return (
-    <Card className="flex flex-col bg-zinc-800 border-none">
-      <CardHeader className="text-white pb-0">
-        <CardTitle>Brand Breakdown</CardTitle>
-        <CardDescription className='text-gray-400'>Based on Inventory</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        {error ? (
-          <p className="text-red-500">Error: {error}</p>
-        ) : brandData.length === 0 ? (
-          <p className="text-center text-zinc-400">No data available</p>
-        ) : (
-          <ChartContainer
-            config={chartConfig}
-            className="mx-auto aspect-square max-h-[250px]"
-          >
+    <div>
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-white">Category Breakdown</h3>
+        <p className="text-xs mt-0.5" style={{ color: '#475569' }}>Inventory by item type</p>
+      </div>
+
+      {data.length === 0 ? (
+        <div className="flex items-center justify-center h-40">
+          <p className="text-sm" style={{ color: '#475569' }}>No inventory data yet.</p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-6">
+          <ResponsiveContainer width="50%" height={200}>
             <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-                className='bg-zinc-900 border-none'
-              />
+              <Tooltip content={<CustomTooltip />} />
               <Pie
-                data={brandData}
+                data={data}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
                 cy="50%"
-                outerRadius={120}
-                fill="#8884d8"
+                innerRadius={55}
+                outerRadius={90}
+                paddingAngle={3}
               >
-                {brandData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                {data.map((entry, i) => (
+                  <Cell key={i} fill={entry.fill} stroke="transparent" />
                 ))}
               </Pie>
             </PieChart>
-          </ChartContainer>
-        )}
-      </CardContent>
-      <CardFooter className=" gap-2 mt-12 text-sm">
-        <div className="leading-none text-gray-400">
-          Breakdown of brands currently in your inventory
+          </ResponsiveContainer>
+
+          <div className="flex-1 space-y-2">
+            {data.map((entry) => (
+              <div key={entry.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: entry.fill }} />
+                  <span style={{ color: '#94a3b8' }}>{entry.name}</span>
+                </div>
+                <span className="font-medium text-white">{entry.value}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </CardFooter>
-    </Card>
+      )}
+    </div>
   );
 };
 

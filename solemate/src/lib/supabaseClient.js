@@ -4,10 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Check if the environment variables are set
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Supabase URL and anon key are required.");
-}
-
-// Create the Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// During SSR/build without env vars, provide stub values so the module loads.
+// Actual API calls only happen client-side where the real env vars are present.
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);

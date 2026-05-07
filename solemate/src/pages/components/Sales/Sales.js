@@ -1,9 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Button as NextUIButton, Spinner } from "@nextui-org/react";
 import { supabase } from '../../../lib/supabaseClient';
 import Layout from '../Layout';
 import AddSaleModal from './AddSaleModal';
+import { Plus, ChevronLeft, ChevronRight, ShoppingBag, TrendingUp } from 'lucide-react';
 
+const formatCurrency = (val) => `£${Number(val || 0).toFixed(2)}`;
+
+const ProfitCell = ({ value }) => {
+  const num = Number(value || 0);
+  const positive = num >= 0;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold"
+      style={
+        positive
+          ? { background: 'rgba(16,185,129,0.12)', color: '#10b981' }
+          : { background: 'rgba(239,68,68,0.12)', color: '#ef4444' }
+      }
+    >
+      {positive ? '+' : ''}£{Math.abs(num).toFixed(2)}
+    </span>
+  );
+};
 
 const Sales = () => {
   const [inventory, setInventory] = useState([]);
@@ -11,208 +29,245 @@ const Sales = () => {
   const [filteredSales, setFilteredSales] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [loading, setLoading] = useState(true); // New loading state
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
-    fetchInventory();
-    fetchSales();
+    const init = async () => {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      const [{ data: inv }, { data: sal }] = await Promise.all([
+        supabase.from('inventory').select('*').eq('user_id', user.id),
+        supabase.from('sales').select('*').eq('user_id', user.id),
+      ]);
+      setInventory(inv || []);
+      setSales(sal || []);
+      setLoading(false);
+    };
+    init();
   }, []);
 
   useEffect(() => {
-    filterSalesByMonth();
+    const m = currentDate.getMonth();
+    const y = currentDate.getFullYear();
+    setFilteredSales(
+      sales.filter((s) => {
+        const d = new Date(s.sale_date);
+        return d.getMonth() === m && d.getFullYear() === y;
+      })
+    );
   }, [sales, currentDate]);
-
-  const fetchInventory = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase.from('inventory').select('*').eq('user_id', user.id);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setInventory(data);
-    }
-    setLoading(false); 
-  };
-
-  const fetchSales = async () => {
-    setLoading(true); 
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase.from('sales').select('*').eq('user_id', user.id);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setSales(data);
-    }
-    setLoading(false);
-  };
-
-  const filterSalesByMonth = () => {
-    const month = currentDate.getMonth() + 1;
-    const year = currentDate.getFullYear();
-    const filtered = sales.filter(sale => {
-      const saleDate = new Date(sale.sale_date);
-      return saleDate.getMonth() + 1 === month && saleDate.getFullYear() === year;
-    });
-    setFilteredSales(filtered);
-  };
 
   const handleAddSale = async (sale) => {
     const { data: { user } } = await supabase.auth.getUser();
-    const itemInInventory = inventory.find(item => item.id.toString() === sale.selectedItemId.toString());
+    const item = inventory.find((i) => i.id.toString() === sale.selectedItemId.toString());
+    if (!item) return;
 
-    if (!itemInInventory) {
-      console.error('Selected item not found in inventory.');
-      return;
-    }
-
-    const calculatedProfit = sale.priceSold - (itemInInventory.price * sale.quantity);
+    const profit = sale.priceSold - item.price * sale.quantity;
     const { error } = await supabase.from('sales').insert([{
       user_id: user.id,
-      inventory_item_id: itemInInventory.id,
-      product_name: itemInInventory.product_name,
-      brand: itemInInventory.brand,
-      size: itemInInventory.size,
+      inventory_item_id: item.id,
+      product_name: item.product_name,
+      brand: item.brand,
+      size: item.size,
       quantity_sold: sale.quantity,
       price_sold: sale.priceSold,
       sale_date: sale.saleDate,
-      profit: calculatedProfit
+      profit,
     }]);
 
-    if (error) {
-      console.error('Error adding sale:', error.message);
-    } else {
-      if (itemInInventory.quantity - sale.quantity <= 0) {
-        await supabase.from('inventory').delete().eq('id', itemInInventory.id);
+    if (!error) {
+      const newQty = item.quantity - sale.quantity;
+      if (newQty <= 0) {
+        await supabase.from('inventory').delete().eq('id', item.id);
       } else {
-        await supabase.from('inventory').update({ quantity: itemInInventory.quantity - sale.quantity }).eq('id', itemInInventory.id);
+        await supabase.from('inventory').update({ quantity: newQty }).eq('id', item.id);
       }
-      fetchSales();
-      fetchInventory();
+      const [{ data: inv }, { data: sal }] = await Promise.all([
+        supabase.from('inventory').select('*').eq('user_id', user.id),
+        supabase.from('sales').select('*').eq('user_id', user.id),
+      ]);
+      setInventory(inv || []);
+      setSales(sal || []);
       setIsModalOpen(false);
     }
   };
 
-  const handleDeleteSale = async (saleId) => {
-    const { error } = await supabase.from('sales').delete().eq('id', saleId);
-
-    if (error) {
-      console.error('Error deleting sale:', error.message);
-    } else {
-      fetchSales();
-    }
+  const handleDeleteSale = async (id) => {
+    await supabase.from('sales').delete().eq('id', id);
+    setSales((prev) => prev.filter((s) => s.id !== id));
+    setDeleteConfirm(null);
   };
 
-  const openAddSaleModal = () => setIsModalOpen(true);
-  const closeAddSaleModal = () => setIsModalOpen(false);
+  const prevMonth = () => setCurrentDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
 
-  const calculateTotalSalesValue = () => filteredSales.reduce((total, sale) => total + sale.price_sold, 0);
-
-  const handlePreviousMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)));
-  const handleNextMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)));
-
-  const classNames = {
-    base: "w-full relative",  
-    wrapper: "p-4 bg-zinc-800",  
-    table: "min-w-full auto", 
-    th: "px-6 py-3 bg-zinc-700 text-zinc-400 text-left font-bold",
-    td: "px-6 py-4 text-zinc-400",
-    row: "bg-zinc-800 last:border-none",
-    buttonEdit: "bg-yellow-500 text-white py-1 px-3 rounded-md hover:bg-yellow-600 transition-colors mr-2",
-    buttonDelete: "bg-red-500 text-white py-1 px-3 rounded-md hover:bg-red-600 transition-colors",
-  };
+  const totalRevenue = filteredSales.reduce((t, s) => t + (s.price_sold || 0), 0);
+  const totalProfit = filteredSales.reduce((t, s) => t + (s.profit || 0), 0);
+  const monthLabel = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   return (
     <Layout>
-      <div className="relative">
-        <h2 className="text-3xl text-violet-300 font-bold mb-8">Sales</h2>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Sales</h1>
+          <p className="text-sm mt-1" style={{ color: '#475569' }}>
+            {filteredSales.length} {filteredSales.length === 1 ? 'sale' : 'sales'} in {monthLabel}
+          </p>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)', border: 'none', cursor: 'pointer' }}
+        >
+          <Plus size={15} />
+          Log Sale
+        </button>
+      </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <NextUIButton
-            onPress={openAddSaleModal}
-            className="bg-violet-500 text-white py-2 px-4 rounded-3xl hover:bg-violet-600 transition-colors"
+      {/* Month navigator + stats */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevMonth}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', color: '#94a3b8', cursor: 'pointer' }}
           >
-            Add New Sale
-          </NextUIButton>
-
-          <div className="flex items-center space-x-4">
-            <NextUIButton
-              onPress={handlePreviousMonth}
-              className="bg-gray-500 text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
-            >
-              &lt;
-            </NextUIButton>
-            <span className="text-violet-200 font-bold">
-              {currentDate.toLocaleString('default', { month: 'long' })} {currentDate.getFullYear()}
-            </span>
-            <NextUIButton
-              onPress={handleNextMonth}
-              className="bg-gray-500 text-white w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-600 transition-colors"
-            >
-              &gt;
-            </NextUIButton>
-          </div>
-
-          <div className="text-violet-200">
-            <p>Total Sales This Month: <span className="font-bold">£{calculateTotalSalesValue()}</span></p>
-          </div>
+            <ChevronLeft size={16} />
+          </button>
+          <span className="text-sm font-semibold text-white px-2">{monthLabel}</span>
+          <button
+            onClick={nextMonth}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)', color: '#94a3b8', cursor: 'pointer' }}
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
 
-        {loading ? (
-          <div className="text-center">
-            <Spinner size="md" color='white'  />
-          </div>
-        ) : filteredSales.length === 0 ? (
-          <div className="text-center text-violet-200 mb-4">
-            No Sales Made This Month.
-          </div>
-        ) : (
-          <Table
-            aria-label="Sales Table"
-            selectionMode="none"
-            classNames={classNames}
+        <div className="flex gap-3">
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm"
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
           >
-            <TableHeader>
-              <TableColumn className={classNames.th}>Product Name</TableColumn>
-              <TableColumn className={classNames.th}>Quantity Sold</TableColumn>
-              <TableColumn className={classNames.th}>Price Sold</TableColumn>
-              <TableColumn className={classNames.th}>Profit</TableColumn>
-              <TableColumn className={classNames.th}>Date Sold</TableColumn>
-              <TableColumn className={classNames.th}>Actions</TableColumn>
-            </TableHeader>
-            <TableBody>
-              {filteredSales.map((sale) => (
-                <TableRow key={sale.id} className={classNames.row}>
-                  <TableCell className={classNames.td}>{sale.product_name}</TableCell>
-                  <TableCell className={classNames.td}>{sale.quantity_sold}</TableCell>
-                  <TableCell className={classNames.td}>£{sale.price_sold}</TableCell>
-                  <TableCell className={classNames.td}>{sale.profit ? sale.profit.toFixed(2) : 'N/A'}</TableCell>
-                  <TableCell className={classNames.td}>
-                    {sale.sale_date ? new Date(sale.sale_date).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell className={classNames.td}>
-                    <NextUIButton
-                      onPress={() => handleDeleteSale(sale.id)}
-                      className={classNames.buttonDelete}
-                    >
-                      Delete
-                    </NextUIButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-
-        <AddSaleModal
-          isOpen={isModalOpen}
-          onClose={closeAddSaleModal}
-          onAddSale={handleAddSale}
-          inventory={inventory}
-        />
+            <ShoppingBag size={14} style={{ color: '#a78bfa' }} />
+            <span style={{ color: '#64748b' }}>Revenue:</span>
+            <span className="font-semibold text-white">{formatCurrency(totalRevenue)}</span>
+          </div>
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm"
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
+          >
+            <TrendingUp size={14} style={{ color: totalProfit >= 0 ? '#10b981' : '#ef4444' }} />
+            <span style={{ color: '#64748b' }}>Profit:</span>
+            <span className="font-semibold" style={{ color: totalProfit >= 0 ? '#10b981' : '#ef4444' }}>
+              {totalProfit >= 0 ? '+' : ''}{formatCurrency(totalProfit)}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Table */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+        </div>
+      ) : filteredSales.length === 0 ? (
+        <div
+          className="flex flex-col items-center justify-center py-20 rounded-2xl"
+          style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
+        >
+          <ShoppingBag size={36} style={{ color: '#334155', marginBottom: '12px' }} />
+          <p className="font-medium" style={{ color: '#475569' }}>No sales this month.</p>
+          <p className="text-sm mt-1" style={{ color: '#334155' }}>Click &ldquo;Log Sale&rdquo; to record one.</p>
+        </div>
+      ) : (
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ border: '1px solid var(--border-subtle)' }}
+        >
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border-subtle)' }}>
+                {['Product', 'Brand', 'Qty', 'Sold For', 'Profit', 'Date', 'Actions'].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: '#475569' }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSales.map((sale, idx) => (
+                <tr
+                  key={sale.id}
+                  style={{
+                    background: idx % 2 === 0 ? 'var(--surface-1)' : 'rgba(255,255,255,0.01)',
+                    borderBottom: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  <td className="px-4 py-3 font-medium text-white">{sale.product_name}</td>
+                  <td className="px-4 py-3" style={{ color: '#94a3b8' }}>{sale.brand || '—'}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold"
+                      style={{ background: 'rgba(139,92,246,0.12)', color: '#a78bfa' }}
+                    >
+                      {sale.quantity_sold}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-medium text-white">{formatCurrency(sale.price_sold)}</td>
+                  <td className="px-4 py-3">
+                    <ProfitCell value={sale.profit} />
+                  </td>
+                  <td className="px-4 py-3" style={{ color: '#64748b' }}>
+                    {sale.sale_date ? new Date(sale.sale_date).toLocaleDateString('en-GB') : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {deleteConfirm === sale.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDeleteSale(sale.id)}
+                          className="px-2 py-1.5 rounded-lg text-xs font-medium"
+                          style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(null)}
+                          className="px-2 py-1.5 rounded-lg text-xs font-medium"
+                          style={{ background: 'var(--surface-2)', color: '#64748b', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteConfirm(sale.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                        style={{ background: 'rgba(239,68,68,0.08)', color: '#f87171', border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer' }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <AddSaleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAddSale={handleAddSale}
+        inventory={inventory}
+      />
     </Layout>
   );
 };

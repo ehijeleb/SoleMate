@@ -1,250 +1,212 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../Layout';
 import { supabase } from '../../../lib/supabaseClient';
-import DashboardProfitChart from "./DashboardProfitChart";
+import DashboardProfitChart from './DashboardProfitChart';
 import DashboardBrandBreakdown from './DashboardBrandBreakdown';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, Package, BarChart2 } from 'lucide-react';
+
+const TIME_PERIODS = ['Last Week', 'Last Month', 'Last 6 Months', 'Last Year', 'All Time'];
+
+const filterByPeriod = (data, period, dateKey = 'sale_date') => {
+  if (period === 'All Time') return data;
+  const now = new Date();
+  const cutoff = new Date(now);
+  if (period === 'Last Week') cutoff.setDate(now.getDate() - 7);
+  else if (period === 'Last Month') cutoff.setMonth(now.getMonth() - 1);
+  else if (period === 'Last 6 Months') cutoff.setMonth(now.getMonth() - 6);
+  else if (period === 'Last Year') cutoff.setFullYear(now.getFullYear() - 1);
+  return data.filter((item) => new Date(item[dateKey] || item.date_added) >= cutoff);
+};
+
+const StatCard = ({ icon: Icon, label, value, sub, iconColor, glowColor, periodPicker, onPeriodChange, period }) => (
+  <div
+    className="p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden"
+    style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
+  >
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: '120px',
+        height: '120px',
+        background: `radial-gradient(circle at top right, ${glowColor} 0%, transparent 70%)`,
+        pointerEvents: 'none',
+      }}
+    />
+    <div className="flex items-start justify-between relative z-10">
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ background: `${iconColor}18`, border: `1px solid ${iconColor}25` }}
+      >
+        <Icon size={18} style={{ color: iconColor }} />
+      </div>
+      {periodPicker && (
+        <select
+          value={period}
+          onChange={(e) => onPeriodChange(e.target.value)}
+          className="text-xs rounded-lg px-2 py-1 outline-none"
+          style={{
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border-subtle)',
+            color: '#94a3b8',
+          }}
+        >
+          {TIME_PERIODS.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      )}
+    </div>
+    <div className="relative z-10">
+      <p className="text-xs font-medium mb-1" style={{ color: '#64748b' }}>{label}</p>
+      <p className="text-2xl font-bold text-white">{value}</p>
+      {sub && <p className="text-xs mt-1" style={{ color: '#475569' }}>{sub}</p>}
+    </div>
+  </div>
+);
 
 const Dashboard = () => {
-    const [userName, setUserName] = useState('');
-    const [sales, setSales] = useState([]);
-    const [inventory, setInventory] = useState([]);
-    const [totalRevenue, setTotalRevenue] = useState(0);
-    const [totalSalesCount, setTotalSalesCount] = useState(0);
-    const [totalSpent, setTotalSpent] = useState(0);
-    const [totalSpentTimePeriod, setTotalSpentTimePeriod] = useState('All Time'); 
-    const [totalItems, setTotalItems] = useState(0);
-    const [totalProfit, setTotalProfit] = useState(0);
-    const [profitTimePeriod, setProfitTimePeriod] = useState('All Time'); 
+  const [userName, setUserName] = useState('');
+  const [sales, setSales] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalSalesCount, setTotalSalesCount] = useState(0);
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [spentPeriod, setSpentPeriod] = useState('All Time');
+  const [totalProfit, setTotalProfit] = useState(0);
+  const [profitPeriod, setProfitPeriod] = useState('All Time');
+  const [totalItems, setTotalItems] = useState(0);
 
-    useEffect(() => {
-        const fetchUserName = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-            if (user) {
-                const firstName = user.user_metadata.first_name || '';
-                const lastName = user.user_metadata.last_name || '';
-                setUserName(`${firstName} ${lastName}`);
-            }
-        };
+      const firstName = user.user_metadata?.first_name || '';
+      const lastName = user.user_metadata?.last_name || '';
+      setUserName(`${firstName} ${lastName}`.trim());
 
-        const fetchSales = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            const { data: salesData, error: salesError } = await supabase
-              .from('sales')
-              .select('*')  
-              .eq('user_id', user.id);
-          
-            if (salesError) {
-              console.error("Error fetching sales:", salesError.message);
-            } else {
-              console.log('Fetched sales data:', salesData); 
-              setSales(salesData);
-              calculateTotalRevenueAndSales(salesData);  // Calculate total revenue and sales count
-            }
-          };
-        
-          
-        
-        const fetchInventory = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            const { data: inventoryData, error: inventoryError } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', user.id);
-        
-            if (inventoryError) {
-                console.error("Error fetching inventory:", inventoryError.message);
-            } else {
-                console.log('Fetched inventory data:', inventoryData);
-                setInventory(inventoryData);
-            }
-        };
+      const [{ data: salesData }, { data: inventoryData }] = await Promise.all([
+        supabase.from('sales').select('*').eq('user_id', user.id),
+        supabase.from('inventory').select('*').eq('user_id', user.id),
+      ]);
 
-        fetchUserName();
-        fetchSales();
-        fetchInventory();
-    }, []);
-
-    useEffect(() => {
-        calculateTotalSpent();
-    }, [sales, inventory, totalSpentTimePeriod]);
-
-    useEffect(() => {
-        calculateTotalProfit(sales); 
-    }, [sales, profitTimePeriod]);
-
-
-    const calculateTotalProfit = (sales) => {
-        const filteredSales = filterSalesByTimePeriod(sales, profitTimePeriod);
-        console.log("Filtered sales for profit:", filteredSales);  // Debugging log
-      
-        const totalProfit = filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
-        setTotalProfit(totalProfit.toFixed(2));
-      };
-      
-    
-      
-
-    const calculateTotalRevenueAndSales = (sales) => {
-        const totalRevenue = sales.reduce((sum, sale) => sum + sale.price_sold, 0);
-        setTotalRevenue(totalRevenue.toFixed(2));
-        setTotalSalesCount(sales.length);
+      if (salesData) {
+        setSales(salesData);
+        const rev = salesData.reduce((s, x) => s + (x.price_sold || 0), 0);
+        setTotalRevenue(rev.toFixed(2));
+        setTotalSalesCount(salesData.length);
+      }
+      if (inventoryData) {
+        setInventory(inventoryData);
+        setTotalItems(inventoryData.reduce((s, x) => s + (x.quantity || 0), 0));
+      }
     };
+    init();
+  }, []);
 
-    const calculateTotalSpent = async () => {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user) {
-            console.error('User not logged in');
-            return;
-          }
-      
-          // Fetch all shoes from the shoe_log table
-          const { data: shoeLog, error } = await supabase
-            .from('shoe_log')
-            .select('*')
-            .eq('user_id', user.id);
-          
-          if (error) {
-            console.error('Error fetching shoe log:', error.message);
-            return;
-          }
-      
-          console.log("Fetched shoe log data:", shoeLog);  // Log the fetched shoe log
-      
-          // Filter sales by the selected time period
-          const filteredShoeLog = filterSalesByTimePeriod(shoeLog, totalSpentTimePeriod);
-          console.log("Filtered shoe log for total spent:", filteredShoeLog);  // Debugging log
-      
-          const totalSpent = filteredShoeLog.reduce((sum, shoe) => {
-            if (shoe.price) {
-              return sum + (shoe.quantity * shoe.price);
-            }
-            return sum;
-          }, 0);
-      
-          const totalItems = filteredShoeLog.reduce((sum, shoe) => sum + shoe.quantity, 0);
-      
-          setTotalSpent(totalSpent.toFixed(2));
-          setTotalItems(totalItems);
-        } catch (error) {
-          console.error('Error calculating total spent:', error);
-        }
-      };
-      
-      
+  useEffect(() => {
+    const filtered = filterByPeriod(sales, profitPeriod);
+    const profit = filtered.reduce((s, x) => s + (x.profit || 0), 0);
+    setTotalProfit(profit.toFixed(2));
+  }, [sales, profitPeriod]);
 
-      const filterSalesByTimePeriod = (data, timePeriod) => {
-        const now = new Date();
-        let filteredData = data;
-      
-        switch (timePeriod) {
-          case 'Last Week':
-            const lastWeek = new Date();
-            lastWeek.setDate(now.getDate() - 7);
-            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastWeek);
-            break;
-          case 'Last Month':
-            const lastMonth = new Date();
-            lastMonth.setMonth(now.getMonth() - 1);
-            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastMonth);
-            break;
-          case 'Last 6 Months':
-            const lastSixMonths = new Date();
-            lastSixMonths.setMonth(now.getMonth() - 6);
-            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastSixMonths);
-            break;
-          case 'Last Year':
-            const lastYear = new Date();
-            lastYear.setFullYear(now.getFullYear() - 1);
-            filteredData = data.filter(item => new Date(item.date_added || item.sale_date) >= lastYear);
-            break;
-          default:
-            filteredData = data;
-            break;
-        }
-      
-        console.log("Filtered data based on time period:", filteredData);  // Debugging log
-        return filteredData;
-      };
-      
-    
-      
-      
-      
-      
-      
-
-    const handleTotalSpentTimePeriodChange = (e) => {
-        setTotalSpentTimePeriod(e.target.value);
+  useEffect(() => {
+    const calcSpent = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from('shoe_log').select('*').eq('user_id', user.id);
+      if (!data) return;
+      const filtered = filterByPeriod(data, spentPeriod, 'date_added');
+      const spent = filtered.reduce((s, x) => s + (x.price || 0) * (x.quantity || 0), 0);
+      setTotalSpent(spent.toFixed(2));
     };
+    calcSpent();
+  }, [spentPeriod]);
 
-    const handleProfitTimePeriodChange = (e) => {
-        setProfitTimePeriod(e.target.value);
-    };
+  const profitNum = parseFloat(totalProfit);
+  const profitPositive = profitNum >= 0;
 
-    return (
-        <Layout>
-            <div className="w-full h-full p-0 m-0 ">
-                <div className="mb-14">
-                    <h1 className="text-4xl font-extrabold text-violet-300">Welcome, {userName}!</h1>
-                </div>
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
 
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-8 mb-6 mx-8 h-32">
-                    <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
-                        <h2 className="text-xl font-bold mb-1 text-violet-100">Total Revenue</h2>
-                        <p className="text-2xl mb-2 text-violet-300">£{totalRevenue}</p>
-                        <p className="text-sm text-gray-400">{totalSalesCount} Sales</p>
-                    </div>
-                    <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md relative">
-                        <div className="flex justify-between">
-                            <h2 className="text-xl font-bold text-white">Total Spent</h2>
-                            <select
-                                value={totalSpentTimePeriod}
-                                onChange={handleTotalSpentTimePeriodChange}
-                                className="text-sm bg-zinc-700 text-white rounded-lg px-2 py-1 border border-zinc-600 focus:outline-none"
-                            >
-                                <option>Last Week</option>
-                                <option>Last Month</option>
-                                <option>Last 6 Months</option>
-                                <option>Last Year</option>
-                                <option>All Time</option>
-                            </select>
-                        </div>
-                        <p className="text-2xl text-violet-300 mt-2">£{totalSpent}</p>
-                        <p className="text-sm text-gray-400 mt-2">{totalItems} Transactions</p>
-                    </div>
-                    <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md relative">
-                        <div className="flex justify-between">
-                            <h2 className="text-xl font-bold text-white">Profit</h2>
-                            <select
-                                value={profitTimePeriod}
-                                onChange={handleProfitTimePeriodChange}
-                                className="text-sm bg-zinc-700 text-white rounded-lg px-2 py-1 border border-zinc-600 focus:outline-none"
-                            >
-                                <option>Last Week</option>
-                                <option>Last Month</option>
-                                <option>Last 6 Months</option>
-                                <option>Last Year</option>
-                                <option>All Time</option>
-                            </select>
-                        </div>
-                        <p className="text-2xl text-violet-300 mt-2">£{totalProfit}</p>
-                    </div>
-                </div>
+  return (
+    <Layout>
+      {/* Header */}
+      <div className="mb-8">
+        <p className="text-sm mb-1" style={{ color: '#64748b' }}>{greeting()}</p>
+        <h1 className="text-3xl font-bold text-white">
+          {userName ? `Hey, ${userName.split(' ')[0]} 👋` : 'Dashboard'}
+        </h1>
+        <p className="text-sm mt-1" style={{ color: '#475569' }}>
+          Here&apos;s how your resell business is performing.
+        </p>
+      </div>
 
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))]  mx-8 gap-6">
-                    <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
-                    <DashboardBrandBreakdown />
-                    </div>
-                    <div className="bg-zinc-800 p-4 border border-zinc-700 rounded-lg shadow-md">
-                    <DashboardProfitChart />
-                    </div>
-                </div>
-            </div>
-        </Layout>
-    );
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          icon={DollarSign}
+          label="Total Revenue"
+          value={`£${totalRevenue}`}
+          sub={`${totalSalesCount} sales`}
+          iconColor="#a78bfa"
+          glowColor="rgba(167,139,250,0.08)"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Net Profit"
+          value={<span style={{ color: profitPositive ? '#10b981' : '#ef4444' }}>£{totalProfit}</span>}
+          sub={profitPeriod}
+          iconColor={profitPositive ? '#10b981' : '#ef4444'}
+          glowColor={profitPositive ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}
+          periodPicker
+          period={profitPeriod}
+          onPeriodChange={setProfitPeriod}
+        />
+        <StatCard
+          icon={ShoppingBag}
+          label="Total Spent"
+          value={`£${totalSpent}`}
+          sub={spentPeriod}
+          iconColor="#f59e0b"
+          glowColor="rgba(245,158,11,0.08)"
+          periodPicker
+          period={spentPeriod}
+          onPeriodChange={setSpentPeriod}
+        />
+        <StatCard
+          icon={Package}
+          label="Items in Stock"
+          value={totalItems}
+          sub={`${inventory.length} unique listings`}
+          iconColor="#38bdf8"
+          glowColor="rgba(56,189,248,0.08)"
+        />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div
+          className="rounded-2xl p-5"
+          style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
+        >
+          <DashboardProfitChart />
+        </div>
+        <div
+          className="rounded-2xl p-5"
+          style={{ background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}
+        >
+          <DashboardBrandBreakdown />
+        </div>
+      </div>
+    </Layout>
+  );
 };
 
 export default Dashboard;

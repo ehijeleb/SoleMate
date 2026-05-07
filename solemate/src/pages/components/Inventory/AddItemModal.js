@@ -1,209 +1,320 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@nextui-org/react";
+import { X, Upload } from 'lucide-react';
+
+const CATEGORIES = [
+  { key: 'shoes',         label: 'Sneakers',       emoji: '👟' },
+  { key: 'clothing',      label: 'Streetwear',      emoji: '👕' },
+  { key: 'pokemon',       label: 'Pokémon Cards',   emoji: '🃏' },
+  { key: 'sports_cards',  label: 'Sports Cards',    emoji: '⚾' },
+  { key: 'trading_cards', label: 'Trading Cards',   emoji: '🎴' },
+  { key: 'collectibles',  label: 'Collectibles',    emoji: '🏆' },
+  { key: 'luxury',        label: 'Luxury',          emoji: '💎' },
+  { key: 'electronics',   label: 'Electronics',     emoji: '📱' },
+];
+
+const BRANDS = {
+  shoes:         ['Nike', 'Adidas', 'New Balance', 'Air Jordan', 'Yeezy', 'ASICS', 'Puma', 'Reebok', 'Salehe Bembury', 'Other'],
+  clothing:      ['Supreme', 'Kith', 'Fear of God', 'Sp5der', 'Stüssy', 'Off-White', 'Palace', 'BAPE', 'Corteiz', 'Other'],
+  pokemon:       ['PSA', 'BGS', 'CGC', 'ACE', 'Raw / Ungraded'],
+  sports_cards:  ['PSA', 'BGS', 'SGC', 'CSG', 'Raw / Ungraded'],
+  trading_cards: ['PSA', 'BGS', 'CGC', 'Raw / Ungraded'],
+  collectibles:  ['Funko', 'Lego', 'Hot Wheels', 'Bearbrick', 'KAWS', 'Medicom', 'Other'],
+  luxury:        ['Rolex', 'Louis Vuitton', 'Chanel', 'Gucci', 'Hermès', 'Cartier', 'Prada', 'Other'],
+  electronics:   ['Apple', 'Samsung', 'Sony', 'Microsoft', 'Google', 'Nintendo', 'Other'],
+};
+
+const CARD_CATEGORIES = ['pokemon', 'sports_cards', 'trading_cards'];
+
+const inputStyle = {
+  background: 'var(--surface-2)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '8px',
+  color: '#f1f5f9',
+  padding: '8px 12px',
+  width: '100%',
+  outline: 'none',
+  fontSize: '14px',
+};
+
+const labelStyle = {
+  display: 'block',
+  fontSize: '12px',
+  fontWeight: '500',
+  color: '#64748b',
+  marginBottom: '6px',
+};
+
+const Field = ({ label, children }) => (
+  <div>
+    <label style={labelStyle}>{label}</label>
+    {children}
+  </div>
+);
+
+const SelectInput = ({ value, onChange, children, placeholder }) => (
+  <select
+    value={value}
+    onChange={onChange}
+    style={{ ...inputStyle, cursor: 'pointer' }}
+  >
+    {placeholder && <option value="">{placeholder}</option>}
+    {children}
+  </select>
+);
+
+const INITIAL = {
+  product_name: '', item_type: '', brand: '',
+  size: '', quantity: '1', price: '', image_file: null, image_url: '',
+};
 
 const AddItemModal = ({ isOpen, onClose, onAddItem, item }) => {
-  const initialNewItemState = {
-    product_name: '',
-    item_type: '',
-    item_type_display: '', // To store the capitalized version
-    brand: '',
-    size: '',
-    quantity: '',
-    price: '',
-    image_file: null,
-  };
-
-  const [newItem, setNewItem] = useState(initialNewItemState);
-
-
-  const brandOptions = {
-    shoes: ['Nike', 'Adidas', 'New Balance', 'Air Jordan', 'Yeezy', 'ASICS', 'Other'],
-    clothing: ['Nike', 'Fear of God', 'Kith', 'Supreme', 'Sp5der', 'Other'],
-    collectibles: ['Funko', 'Lego', 'Hasbro', 'Mattel', 'Sideshow Collectibles', 'Topps', 'Other'],
-  };
+  const [form, setForm] = useState(INITIAL);
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     if (item) {
-      setNewItem({
+      setForm({
         id: item.id,
         product_name: item.product_name || '',
         item_type: item.item_type || '',
-        item_type_display: capitalizeFirstLetter(item.item_type || ''),
         brand: item.brand || '',
-        size: item.size || '',
-        quantity: item.quantity || '',
-        price: item.price || '',
+        size: item.size != null ? String(item.size) : '',
+        quantity: item.quantity != null ? String(item.quantity) : '1',
+        price: item.price != null ? String(item.price) : '',
+        image_file: null,
         image_url: item.image_url || '',
       });
+    } else {
+      setForm(INITIAL);
     }
-  }, [item]);
+  }, [item, isOpen]);
 
+  const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
-  const capitalizeFirstLetter = (string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+  const handleTypeChange = (type) => {
+    setForm((f) => ({ ...f, item_type: type, brand: '' }));
   };
 
-  const handleSubmit = () => {
-    const validatedItem = {
-      ...newItem,
-      size: newItem.size ? parseFloat(newItem.size) : null,
-      quantity: newItem.quantity ? parseInt(newItem.quantity, 10) : null,
-      price: newItem.price ? parseFloat(newItem.price) : null,
-    };
-    onAddItem(validatedItem);
-    handleReset();  
-    onClose();  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onAddItem(form);
   };
 
-  const handleReset = () => {
-    setNewItem(initialNewItemState);  
+  const handleFile = (file) => {
+    if (file) set('image_file', file);
   };
 
-  const handleTypeChange = (selectedKeys) => {
-    const selectedValue = Array.from(selectedKeys).join(", ");
-    setNewItem((prevItem) => ({
-      ...prevItem,
-      item_type: selectedValue.toLowerCase(),
-      item_type_display: capitalizeFirstLetter(selectedValue), 
-      brand: '',
-    }));
-  };
+  const isCard = CARD_CATEGORIES.includes(form.item_type);
+  const sizeLabel = isCard ? 'Grade (e.g. 10, 9.5)' : form.item_type === 'shoes' ? 'Size (US)' : form.item_type === 'clothing' ? 'Size (e.g. M, L, XL)' : 'Size / Condition';
+  const brandLabel = isCard ? 'Grader' : 'Brand';
 
-  const handleBrandChange = (selectedKeys) => {
-    const selectedValue = Array.from(selectedKeys).join(", ");
-    setNewItem({ ...newItem, brand: selectedValue });
-  };
+  if (!isOpen) return null;
 
   return (
-    
-    <Modal isOpen={isOpen} onOpenChange={onClose}>
-      <ModalContent className='bg-zinc-800'>
-        {(onClose) => (
-          <>
-            <ModalHeader>
-              <h2 className="text-2xl mb-4 text-white text-center">
-                {item ? 'Edit Item' : 'Add New Item'}
-              </h2>
-            </ModalHeader>
-            <ModalBody>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-medium text-zinc-300">Product Name</label>
-                  <input
-                    type="text"
-                    value={newItem.product_name}
-                    onChange={(e) => setNewItem({ ...newItem, product_name: e.target.value })}
-                    className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-                  />
-                </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        style={{
+          background: 'var(--surface-1)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          maxHeight: '90vh',
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <h2 className="text-base font-semibold text-white">
+            {item ? 'Edit Item' : 'Add New Item'}
+          </h2>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-                {/* Item Type Dropdown */}
-                <div>
-                  <label className="text-xs font-medium text-zinc-300">Item Type</label>
-                  <Dropdown>
-                    <DropdownTrigger>
-                      <div
-                        className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white cursor-pointer text-left"
-                      >
-                        {newItem.item_type_display || 'Select Item Type'}
-                      </div>
-                    </DropdownTrigger>
-                    <DropdownMenu
-                      aria-label="Item Type"
-                      variant="flat"
-                      disallowEmptySelection
-                      selectionMode="single"
-                      onSelectionChange={handleTypeChange}
-                    >
-                      <DropdownItem key="shoes">Shoes</DropdownItem>
-                      <DropdownItem key="clothing">Clothing</DropdownItem>
-                      <DropdownItem key="collectibles">Collectibles</DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
+          {/* Product name */}
+          <Field label="Product Name *">
+            <input
+              type="text"
+              value={form.product_name}
+              onChange={(e) => set('product_name', e.target.value)}
+              placeholder="e.g. Jordan 1 Retro High OG Chicago"
+              style={inputStyle}
+              required
+            />
+          </Field>
 
-                {/* Brand Dropdown - conditional on item type */}
-                {newItem.item_type && brandOptions[newItem.item_type] && (
-                  <div>
-                    <label className="text-xs font-medium text-zinc-300">Brand</label>
-                    <Dropdown>
-                      <DropdownTrigger>
-                        <div
-                          className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white cursor-pointer text-left"
-                        >
-                          {newItem.brand || 'Select Brand'}
-                        </div>
-                      </DropdownTrigger>
-                      <DropdownMenu
-                        aria-label="Brand"
-                        variant="flat"
-                        disallowEmptySelection
-                        selectionMode="single"
-                        onSelectionChange={handleBrandChange}
-                      >
-                        {brandOptions[newItem.item_type].map((brand) => (
-                          <DropdownItem key={brand}>{brand}</DropdownItem>
-                        ))}
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
-                )}
+          {/* Category */}
+          <Field label="Category *">
+            <div className="grid grid-cols-4 gap-2">
+              {CATEGORIES.map(({ key, label, emoji }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleTypeChange(key)}
+                  className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all"
+                  style={
+                    form.item_type === key
+                      ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd', cursor: 'pointer' }
+                      : { background: 'var(--surface-2)', border: '1px solid rgba(255,255,255,0.06)', color: '#64748b', cursor: 'pointer' }
+                  }
+                >
+                  <span className="text-xl">{emoji}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </Field>
 
-                {/* Show size input if item type is 'shoes' */}
-                {newItem.item_type === 'shoes' && (
-                  <div>
-                    <label className="text-xs font-medium text-zinc-300">Size</label>
-                    <input
-                      type="number"
-                      value={newItem.size}
-                      onChange={(e) => setNewItem({ ...newItem, size: e.target.value })}
-                      className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-                    />
-                  </div>
-                )}
+          {/* Brand / Grader */}
+          {form.item_type && (
+            <Field label={brandLabel}>
+              <SelectInput
+                value={form.brand}
+                onChange={(e) => set('brand', e.target.value)}
+                placeholder={`Select ${brandLabel.toLowerCase()}…`}
+              >
+                {(BRANDS[form.item_type] || []).map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </SelectInput>
+            </Field>
+          )}
 
-                <div>
-                  <label className="text-xs font-medium text-zinc-300">Quantity</label>
-                  <input
-                    type="number"
-                    value={newItem.quantity}
-                    onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-                    className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-                  />
-                </div>
+          {/* Size / Grade — show for shoes, clothing, and cards */}
+          {form.item_type && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={sizeLabel}>
+                <input
+                  type={isCard || form.item_type === 'shoes' ? 'number' : 'text'}
+                  value={form.size}
+                  onChange={(e) => set('size', e.target.value)}
+                  placeholder={isCard ? '10' : form.item_type === 'shoes' ? '10.5' : 'M'}
+                  style={inputStyle}
+                  step={isCard ? '0.5' : 'any'}
+                />
+              </Field>
 
-                <div>
-                  <label className="text-xs font-medium text-zinc-300">Price</label>
-                  <input
-                    type="number"
-                    value={newItem.price}
-                    onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                    className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-                  />
-                </div>
+              <Field label="Quantity *">
+                <input
+                  type="number"
+                  value={form.quantity}
+                  onChange={(e) => set('quantity', e.target.value)}
+                  min="1"
+                  style={inputStyle}
+                  required
+                />
+              </Field>
+            </div>
+          )}
 
-                <div>
-                  <label className="text-xs font-medium text-zinc-300">Image File</label>
-                  <input
-                    type="file"
-                    onChange={(e) => setNewItem({ ...newItem, image_file: e.target.files[0] })}
-                    className="w-full p-2 border border-zinc-600 bg-zinc-900 rounded-md text-white"
-                  />
-                </div>
+          {/* Price */}
+          {form.item_type && (
+            <Field label="Purchase Price (£) *">
+              <div className="relative">
+                <span
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium"
+                  style={{ color: '#475569' }}
+                >
+                  £
+                </span>
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => set('price', e.target.value)}
+                  placeholder="0.00"
+                  step="0.01"
+                  style={{ ...inputStyle, paddingLeft: '28px' }}
+                  required
+                />
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="danger" variant="light" onPress={onClose} className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors">
-                Cancel
-              </Button>
-              <Button color="primary" onPress={handleSubmit} className="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors">
-                {item ? 'Save Changes' : 'Add Item'}
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
+            </Field>
+          )}
+
+          {/* Image */}
+          {form.item_type && (
+            <Field label="Image (optional)">
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  handleFile(e.dataTransfer.files[0]);
+                }}
+                className="relative rounded-xl flex flex-col items-center justify-center py-6 text-center cursor-pointer transition-all"
+                style={{
+                  border: `2px dashed ${dragOver ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                  background: dragOver ? 'rgba(139,92,246,0.05)' : 'var(--surface-2)',
+                }}
+                onClick={() => document.getElementById('img-upload').click()}
+              >
+                {form.image_file || form.image_url ? (
+                  <div className="flex flex-col items-center gap-2">
+                    {form.image_url && !form.image_file && (
+                      <img
+                        src={form.image_url}
+                        alt="preview"
+                        className="w-16 h-16 object-cover rounded-lg mb-1"
+                      />
+                    )}
+                    <p className="text-xs" style={{ color: '#10b981' }}>
+                      {form.image_file ? `Selected: ${form.image_file.name}` : 'Current image (click to replace)'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={20} style={{ color: '#334155', marginBottom: '8px' }} />
+                    <p className="text-xs" style={{ color: '#475569' }}>
+                      Click or drag to upload an image
+                    </p>
+                  </>
+                )}
+                <input
+                  id="img-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleFile(e.target.files[0])}
+                />
+              </div>
+            </Field>
+          )}
+
+          {/* Footer inside form so type="submit" triggers validation */}
+          <div
+            className="flex items-center justify-end gap-3 pt-3"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '8px' }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{ background: 'var(--surface-2)', border: '1px solid rgba(255,255,255,0.06)', color: '#94a3b8', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)', border: 'none', cursor: 'pointer' }}
+            >
+              {item ? 'Save Changes' : 'Add Item'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 
